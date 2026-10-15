@@ -1,0 +1,373 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Liquid in React — Bronze Animation Workshop</title><style>*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:28px}body{margin:0;background:#f5f1e9;color:#24221d;font:16px/1.75 system-ui,sans-serif}header{background:#15120e;color:#eee3ce;padding:54px max(24px,calc((100vw - 1100px)/2)) 30px}header small,.kicker{color:#b58546;letter-spacing:3px;font-size:11px;font-weight:700}h1{font:500 clamp(38px,6vw,74px)/1.05 Georgia,serif;letter-spacing:-2px;margin:20px 0}h2{font:500 34px/1.2 Georgia,serif;margin:0 0 22px}h3{font-size:19px;margin-top:26px}p{max-width:78ch}a{color:#85531b}header a{color:#e8c58e}.hero{max-width:650px;margin:20px auto 0;position:relative;background:#090704;border-radius:20px;overflow:hidden}.hero .label{position:absolute;bottom:24px;left:24px;font:11px monospace;color:#d3b789;letter-spacing:2px}.layout{display:grid;grid-template-columns:210px minmax(0,1fr);max-width:1200px;margin:auto;gap:45px;padding:42px 28px}nav{position:sticky;top:25px;align-self:start}nav a{display:block;text-decoration:none;padding:6px 0;font-size:13px;color:#63594a}section{padding:22px 0 48px;border-bottom:1px solid #d8cdbd;margin-bottom:25px}.demo{background:#090704;border-radius:14px;overflow:hidden;margin:24px 0;position:relative}.demo>svg{max-height:420px;margin:auto}.controls{display:flex;flex-wrap:wrap;gap:18px;align-items:center;padding:16px;color:#dac6a6;background:#1c1710;font-size:13px}button{cursor:pointer;background:#e4c391;color:#21180b;border:0;border-radius:7px;padding:10px 15px;font:600 12px system-ui}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #b77b28;outline-offset:3px}input[type=range]{accent-color:#bb8848;vertical-align:middle;max-width:180px}pre{position:relative;padding:22px;background:#201e1a;color:#e6d8bf;overflow:auto;border-radius:10px;font:12px/1.8 ui-monospace,monospace;max-height:560px;tab-size:2}code{font-family:ui-monospace,monospace;font-size:.88em}pre code{font-size:inherit}.codebar{display:flex;justify-content:space-between;align-items:center;font:12px monospace;margin-top:24px}.note,.try{background:#eae2d3;padding:18px 22px;border-left:3px solid #a97b3e;margin:22px 0}.try{background:#e7ebdf;border-color:#6e8053}table{border-collapse:collapse;width:100%;font-size:14px}td,th{text-align:left;border-bottom:1px solid #d4cab9;padding:12px 8px}details{padding:14px;background:#ece5d9;border-radius:8px;margin:14px 0}summary{cursor:pointer;font-weight:600}.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}.pair .demo{margin:0}.quiet{color:#756a5a;font-size:13px}footer{padding:35px;text-align:center;background:#19150f;color:#cfbda3}@media(max-width:800px){.layout{display:block;padding:25px 20px}nav{position:static;display:flex;gap:12px;overflow:auto;margin-bottom:25px}nav a{white-space:nowrap}.pair{grid-template-columns:1fr}header{padding:32px 22px}h2{font-size:29px}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}</style><header><small>THE CREATIVE FRONTEND / WORKSHOP 01</small><h1>Make light feel liquid.</h1><p>A step-by-step React workshop. Build the bronze floating drop from a simple shape, understand every layer, and leave with a reusable component.</p><div class="hero"><div class="demo" data-stage="5"><svg viewBox="0 0 800 760" role="img" aria-label="Floating bronze liquid" style="display:block;width:100%;height:100%" xmlns="http://www.w3.org/2000/svg">
+<defs>
+ <radialGradient id="hero-body" cx="48%" cy="23%" r="78%">
+  <stop stop-color="#673519"/><stop offset=".32" stop-color="#3b1c0d"/>
+  <stop offset=".61" stop-color="#180c06"/><stop offset=".82" stop-color="#090704"/>
+  <stop offset="1" stop-color="#977140"/>
+ </radialGradient>
+ <radialGradient id="hero-edge"><stop offset=".79" stop-color="#e7ba79" stop-opacity="0"/><stop offset="1" stop-color="#f2cd91" stop-opacity=".45"/></radialGradient>
+ <radialGradient id="hero-hot"><stop stop-color="#fffef0"/><stop offset=".18" stop-color="#fff0c9" stop-opacity=".97"/><stop offset=".4" stop-color="#ffd28a" stop-opacity=".48"/><stop offset="1" stop-color="#e7a050" stop-opacity="0"/></radialGradient>
+ <radialGradient id="hero-amber"><stop stop-color="#f6a351" stop-opacity=".9"/><stop offset="1" stop-color="#b96424" stop-opacity="0"/></radialGradient>
+ <linearGradient id="hero-band"><stop stop-color="#ffda99"/><stop offset=".5" stop-color="#a36f39"/><stop offset="1" stop-color="#e4b16b"/></linearGradient>
+ <filter id="hero-soft" x="-30%" y="-50%" width="160%" height="200%"><feGaussianBlur stdDeviation="4"/></filter>
+ <filter id="hero-blur" x="-40%" y="-60%" width="180%" height="220%"><feGaussianBlur stdDeviation="15"/></filter>
+ <filter id="hero-grain"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter>
+ <path id="hero-shape" d="M400 100 C502 94 592 137 640 221 C690 306 692 413 640 506 C590 594 500 650 400 650 C296 654 199 604 151 514 C100 424 104 315 148 229 C195 140 294 103 400 100 Z"><animate attributeName="d" values="M400 100 C502 94 592 137 640 221 C690 306 692 413 640 506 C590 594 500 650 400 650 C296 654 199 604 151 514 C100 424 104 315 148 229 C195 140 294 103 400 100 Z;M400 111 C508 99 579 156 621 231 C670 318 697 402 650 491 C607 580 504 637 406 651 C301 669 214 612 162 523 C111 436 99 330 145 245 C193 155 290 115 400 111 Z;M400 94 C498 100 593 147 646 234 C698 321 665 420 620 508 C576 596 496 662 395 648 C292 635 195 600 151 509 C108 418 119 321 158 233 C199 144 296 88 400 94 Z;M400 100 C502 94 592 137 640 221 C690 306 692 413 640 506 C590 594 500 650 400 650 C296 654 199 604 151 514 C100 424 104 315 148 229 C195 140 294 103 400 100 Z" dur="16s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.333;.666;1" keySplines=".42 0 .58 1;.42 0 .58 1;.42 0 .58 1"/></path>
+ <clipPath id="hero-clip"><use href="#hero-shape"/></clipPath>
+</defs>
+<g data-layer="float">
+ <animateTransform attributeName="transform" type="translate" values="0 6;0 -8;0 6" dur="8s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.5;1" keySplines=".42 0 .58 1;.42 0 .58 1"/>
+ <use href="#hero-shape" fill="url(#hero-body)" data-layer="body"/>
+ <g clip-path="url(#hero-clip)" data-layer="reflections">
+  <ellipse cx="320" cy="230" rx="83" ry="52" fill="url(#hero-amber)" filter="url(#hero-blur)"><animate attributeName="cx" values="320;370;300;320" dur="16s" repeatCount="indefinite"/></ellipse>
+  <path d="M83 346 C197 287 322 348 424 370 C535 394 617 437 665 497" fill="none" stroke="url(#hero-band)" stroke-width="34" filter="url(#hero-soft)" opacity=".84">
+   <animate attributeName="d" values="M83 346 C197 287 322 348 424 370 C535 394 617 437 665 497;M83 382 C197 308 322 316 424 350 C535 388 617 472 665 516;M83 346 C197 287 322 348 424 370 C535 394 617 437 665 497" dur="13s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.5;1" keySplines=".42 0 .58 1;.42 0 .58 1"/>
+  </path>
+  <ellipse cx="309" cy="329" rx="42" ry="48" fill="url(#hero-hot)"><animate attributeName="cx" values="309;345;309" dur="13s" repeatCount="indefinite"/></ellipse>
+  <path d="M138 405 C156 532 246 625 346 648" fill="none" stroke="#f8c778" stroke-width="8" filter="url(#hero-soft)" opacity=".65"/>
+  <use href="#hero-shape" fill="url(#hero-edge)"/>
+ </g>
+ <use href="#hero-shape" fill="none" stroke="#eac68d" stroke-opacity=".35" stroke-width="1"/>
+</g>
+<rect width="800" height="760" filter="url(#hero-grain)" opacity=".045" pointer-events="none" data-layer="grain"/>
+</svg><div class="controls"><button class="toggle">Pause</button><span>Live SVG • final composition</span></div></div><span class="label">THE FINISHED EFFECT</span></div></header><div class="layout"><nav aria-label="Lessons"><a href="#s1">01 · The illusion</a><a href="#s2">02 · Coordinates</a><a href="#s3">03 · Bézier curves</a><a href="#s4">04 · Shading</a><a href="#s5">05 · Reflections</a><a href="#s6">06 · Morphing</a><a href="#s7">07 · Floating & grain</a><a href="#s8">08 · React integration</a><a href="#s9">09 · Complete source</a><a href="#s10">10 · Practice & finish</a></nav><main><section id="s1"><p class="kicker">LESSON 01</p><h2>Understand what you are building</h2><p>This is the bronze liquid effect from our React example: a nearly spherical silhouette, a dark warm body, a curved gold reflection, a bright glint, slow deformation, and fine grain. It is <strong>a 2D SVG illusion of a 3D surface</strong>. There is no fluid simulation, mesh, physical refraction, or ray tracing.</p><p>You already know React. The new skill is composing light and shape. We will use vanilla SVG and JavaScript for the live experiments, then put the same drawing into a complete React component. The tutorial itself works offline; its demos do not load React or any CDN.</p><table><tr><th>Layer</th><th>Job</th></tr><tr><td>Closed Bézier path</td><td>Defines the drop’s silhouette.</td></tr><tr><td>Radial gradient</td><td>Suggests a lit crown and shadowed lower surface.</td></tr><tr><td>Clipped reflections</td><td>Suggests shiny material and curved depth.</td></tr><tr><td>SVG animation</td><td>Interpolates shape coordinates and moves highlights.</td></tr><tr><td>React</td><td>Owns configuration, lifecycle, and controls.</td></tr></table><div class="note">Plan for 60–90 minutes. Read a step, change its live control, predict what happens, then inspect the code. Snippets are focused excerpts unless marked “complete”. The full component at the end contains everything.</div></section><section id="s2"><p class="kicker">LESSON 02</p><h2>Give the drawing a coordinate system</h2><div class="demo" data-stage="1"><svg viewBox="0 0 800 760" role="img" aria-label="Floating bronze liquid" style="display:block;width:100%;height:100%" xmlns="http://www.w3.org/2000/svg">
+<defs>
+ <radialGradient id="flat-body" cx="48%" cy="23%" r="78%">
+  <stop stop-color="#673519"/><stop offset=".32" stop-color="#3b1c0d"/>
+  <stop offset=".61" stop-color="#180c06"/><stop offset=".82" stop-color="#090704"/>
+  <stop offset="1" stop-color="#977140"/>
+ </radialGradient>
+ <radialGradient id="flat-edge"><stop offset=".79" stop-color="#e7ba79" stop-opacity="0"/><stop offset="1" stop-color="#f2cd91" stop-opacity=".45"/></radialGradient>
+ <radialGradient id="flat-hot"><stop stop-color="#fffef0"/><stop offset=".18" stop-color="#fff0c9" stop-opacity=".97"/><stop offset=".4" stop-color="#ffd28a" stop-opacity=".48"/><stop offset="1" stop-color="#e7a050" stop-opacity="0"/></radialGradient>
+ <radialGradient id="flat-amber"><stop stop-color="#f6a351" stop-opacity=".9"/><stop offset="1" stop-color="#b96424" stop-opacity="0"/></radialGradient>
+ <linearGradient id="flat-band"><stop stop-color="#ffda99"/><stop offset=".5" stop-color="#a36f39"/><stop offset="1" stop-color="#e4b16b"/></linearGradient>
+ <filter id="flat-soft" x="-30%" y="-50%" width="160%" height="200%"><feGaussianBlur stdDeviation="4"/></filter>
+ <filter id="flat-blur" x="-40%" y="-60%" width="180%" height="220%"><feGaussianBlur stdDeviation="15"/></filter>
+ <filter id="flat-grain"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter>
+ <path id="flat-shape" d="M400 100 C502 94 592 137 640 221 C690 306 692 413 640 506 C590 594 500 650 400 650 C296 654 199 604 151 514 C100 424 104 315 148 229 C195 140 294 103 400 100 Z"><animate attributeName="d" values="M400 100 C502 94 592 137 640 221 C690 306 692 413 640 506 C590 594 500 650 400 650 C296 654 199 604 151 514 C100 424 104 315 148 229 C195 140 294 103 400 100 Z;M400 111 C508 99 579 156 621 231 C670 318 697 402 650 491 C607 580 504 637 406 651 C301 669 214 612 162 523 C111 436 99 330 145 245 C193 155 290 115 400 111 Z;M400 94 C498 100 593 147 646 234 C698 321 665 420 620 508 C576 596 496 662 395 648 C292 635 195 600 151 509 C108 418 119 321 158 233 C199 144 296 88 400 94 Z;M400 100 C502 94 592 137 640 221 C690 306 692 413 640 506 C590 594 500 650 400 650 C296 654 199 604 151 514 C100 424 104 315 148 229 C195 140 294 103 400 100 Z" dur="16s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.333;.666;1" keySplines=".42 0 .58 1;.42 0 .58 1;.42 0 .58 1"/></path>
+ <clipPath id="flat-clip"><use href="#flat-shape"/></clipPath>
+</defs>
+<g data-layer="float">
+ <animateTransform attributeName="transform" type="translate" values="0 6;0 -8;0 6" dur="8s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.5;1" keySplines=".42 0 .58 1;.42 0 .58 1"/>
+ <use href="#flat-shape" fill="url(#flat-body)" data-layer="body"/>
+ <g clip-path="url(#flat-clip)" data-layer="reflections">
+  <ellipse cx="320" cy="230" rx="83" ry="52" fill="url(#flat-amber)" filter="url(#flat-blur)"><animate attributeName="cx" values="320;370;300;320" dur="16s" repeatCount="indefinite"/></ellipse>
+  <path d="M83 346 C197 287 322 348 424 370 C535 394 617 437 665 497" fill="none" stroke="url(#flat-band)" stroke-width="34" filter="url(#flat-soft)" opacity=".84">
+   <animate attributeName="d" values="M83 346 C197 287 322 348 424 370 C535 394 617 437 665 497;M83 382 C197 308 322 316 424 350 C535 388 617 472 665 516;M83 346 C197 287 322 348 424 370 C535 394 617 437 665 497" dur="13s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.5;1" keySplines=".42 0 .58 1;.42 0 .58 1"/>
+  </path>
+  <ellipse cx="309" cy="329" rx="42" ry="48" fill="url(#flat-hot)"><animate attributeName="cx" values="309;345;309" dur="13s" repeatCount="indefinite"/></ellipse>
+  <path d="M138 405 C156 532 246 625 346 648" fill="none" stroke="#f8c778" stroke-width="8" filter="url(#flat-soft)" opacity=".65"/>
+  <use href="#flat-shape" fill="url(#flat-edge)"/>
+ </g>
+ <use href="#flat-shape" fill="none" stroke="#eac68d" stroke-opacity=".35" stroke-width="1"/>
+</g>
+<rect width="800" height="760" filter="url(#flat-grain)" opacity=".045" pointer-events="none" data-layer="grain"/>
+</svg><div class="controls"><button class="toggle">Pause</button><span>Live SVG • stage 1</span></div></div><p><code>viewBox="0 0 800 760"</code> defines an internal drawing space. Its first pair is the origin; its second pair is width and height. SVG scales those units to fit its CSS size. The origin is the upper left: x grows right and y grows downward.</p><p>Begin with a circle centered at (400, 375), radius 275. A circle gets us the rough composition, but a path will let us change individual parts of the outline.</p><div class="codebar"><span>React JSX — complete first component</span><button class="copy">Copy code</button></div><pre><code>export default function FirstDrop() {
+ return (
+  &lt;svg viewBox=&quot;0 0 800 760&quot; style={{ width: &quot;100%&quot;, background: &quot;#090704&quot; }}&gt;
+   &lt;circle cx=&quot;400&quot; cy=&quot;375&quot; r=&quot;275&quot; fill=&quot;#87552f&quot; /&gt;
+  &lt;/svg&gt;
+ );
+}</code></pre><div class="try"><strong>Try in your React app:</strong> change cx to 460. Only the position changes. Change r to 210. Only the size changes. Shrink the parent width: the internal coordinates still stay 800 × 760.</div><p>The stage above already uses our closed path, filled with one flat color. The next step explains how that outline is constructed.</p></section><section id="s3"><p class="kicker">LESSON 03</p><h2>Draw curves with control points</h2><p>A path’s <code>d</code> is a sequence of drawing instructions. <code>M x y</code> moves the pen. <code>C x1 y1 x2 y2 x y</code> draws a cubic Bézier curve from the current point, pulled toward two control points, ending at (x, y). <code>Z</code> closes the outline.</p><div class="demo"><svg viewBox="0 0 600 300" aria-label="Interactive cubic curve"><path id="handles" d="M70 230 L180 60 M420 60 L530 230" stroke="#725a3c" fill="none" stroke-dasharray="5 5"/><path id="curve" d="M70 230 C180 60 420 60 530 230" fill="none" stroke="#e8b871" stroke-width="5"/><g fill="#f5d29b"><circle cx="70" cy="230" r="6"/><circle cx="530" cy="230" r="6"/><circle id="cp1" cx="180" cy="60" r="6"/><circle id="cp2" cx="420" cy="60" r="6"/></g><text x="70" y="265" fill="#c5af8c" font-size="13">Start</text><text x="495" y="265" fill="#c5af8c" font-size="13">End</text></svg><div class="controls"><label>Control-point y <input id="bend" type="range" min="10" max="230" value="60"></label><output id="bend-value">60</output></div></div><p>Drag the slider down toward 230. The endpoints stay fixed while the curve flattens. The curve is pulled toward the handles; it usually does not pass through them.</p><div class="codebar"><span>JavaScript — concept excerpt</span><button class="copy">Copy code</button></div><pre><code>// Vanilla JS: useful for understanding the geometry.
+slider.addEventListener(&quot;input&quot;, () =&gt; {
+ const y = Number(slider.value);
+ curve.setAttribute(&quot;d&quot;, `M70 230 C180 ${y} 420 ${y} 530 230`);
+});</code></pre><p>Our drop joins six cubic segments. For smooth joins, the incoming and outgoing handles should roughly point along the same tangent. Wildly changing a handle can create a dent or sharp corner.</p><div class="codebar"><span>React JSX — focused excerpt</span><button class="copy">Copy code</button></div><pre><code>const SHAPE_A = &quot;M400 100 C502 94 592 137 640 221 C690 306 692 413 640 506 C590 594 500 650 400 650 C296 654 199 604 151 514 C100 424 104 315 148 229 C195 140 294 103 400 100 Z&quot;;</code></pre><div class="try"><strong>Checkpoint:</strong> identify the endpoint of the first C command. It is (640, 221). The next C starts there automatically. The final segment returns to (400, 100), and Z closes the path.</div></section><section id="s4"><p class="kicker">LESSON 04</p><h2>Turn a flat shape into a shaded volume</h2><div class="demo" data-stage="2"><svg viewBox="0 0 800 760" role="img" aria-label="Floating bronze liquid" style="display:block;width:100%;height:100%" xmlns="http://www.w3.org/2000/svg">
+<defs>
+ <radialGradient id="shade-body" cx="48%" cy="23%" r="78%">
+  <stop stop-color="#673519"/><stop offset=".32" stop-color="#3b1c0d"/>
+  <stop offset=".61" stop-color="#180c06"/><stop offset=".82" stop-color="#090704"/>
+  <stop offset="1" stop-color="#977140"/>
+ </radialGradient>
+ <radialGradient id="shade-edge"><stop offset=".79" stop-color="#e7ba79" stop-opacity="0"/><stop offset="1" stop-color="#f2cd91" stop-opacity=".45"/></radialGradient>
+ <radialGradient id="shade-hot"><stop stop-color="#fffef0"/><stop offset=".18" stop-color="#fff0c9" stop-opacity=".97"/><stop offset=".4" stop-color="#ffd28a" stop-opacity=".48"/><stop offset="1" stop-color="#e7a050" stop-opacity="0"/></radialGradient>
+ <radialGradient id="shade-amber"><stop stop-color="#f6a351" stop-opacity=".9"/><stop offset="1" stop-color="#b96424" stop-opacity="0"/></radialGradient>
+ <linearGradient id="shade-band"><stop stop-color="#ffda99"/><stop offset=".5" stop-color="#a36f39"/><stop offset="1" stop-color="#e4b16b"/></linearGradient>
+ <filter id="shade-soft" x="-30%" y="-50%" width="160%" height="200%"><feGaussianBlur stdDeviation="4"/></filter>
+ <filter id="shade-blur" x="-40%" y="-60%" width="180%" height="220%"><feGaussianBlur stdDeviation="15"/></filter>
+ <filter id="shade-grain"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter>
+ <path id="shade-shape" d="M400 100 C502 94 592 137 640 221 C690 306 692 413 640 506 C590 594 500 650 400 650 C296 654 199 604 151 514 C100 424 104 315 148 229 C195 140 294 103 400 100 Z"><animate attributeName="d" values="M400 100 C502 94 592 137 640 221 C690 306 692 413 640 506 C590 594 500 650 400 650 C296 654 199 604 151 514 C100 424 104 315 148 229 C195 140 294 103 400 100 Z;M400 111 C508 99 579 156 621 231 C670 318 697 402 650 491 C607 580 504 637 406 651 C301 669 214 612 162 523 C111 436 99 330 145 245 C193 155 290 115 400 111 Z;M400 94 C498 100 593 147 646 234 C698 321 665 420 620 508 C576 596 496 662 395 648 C292 635 195 600 151 509 C108 418 119 321 158 233 C199 144 296 88 400 94 Z;M400 100 C502 94 592 137 640 221 C690 306 692 413 640 506 C590 594 500 650 400 650 C296 654 199 604 151 514 C100 424 104 315 148 229 C195 140 294 103 400 100 Z" dur="16s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.333;.666;1" keySplines=".42 0 .58 1;.42 0 .58 1;.42 0 .58 1"/></path>
+ <clipPath id="shade-clip"><use href="#shade-shape"/></clipPath>
+</defs>
+<g data-layer="float">
+ <animateTransform attributeName="transform" type="translate" values="0 6;0 -8;0 6" dur="8s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.5;1" keySplines=".42 0 .58 1;.42 0 .58 1"/>
+ <use href="#shade-shape" fill="url(#shade-body)" data-layer="body"/>
+ <g clip-path="url(#shade-clip)" data-layer="reflections">
+  <ellipse cx="320" cy="230" rx="83" ry="52" fill="url(#shade-amber)" filter="url(#shade-blur)"><animate attributeName="cx" values="320;370;300;320" dur="16s" repeatCount="indefinite"/></ellipse>
+  <path d="M83 346 C197 287 322 348 424 370 C535 394 617 437 665 497" fill="none" stroke="url(#shade-band)" stroke-width="34" filter="url(#shade-soft)" opacity=".84">
+   <animate attributeName="d" values="M83 346 C197 287 322 348 424 370 C535 394 617 437 665 497;M83 382 C197 308 322 316 424 350 C535 388 617 472 665 516;M83 346 C197 287 322 348 424 370 C535 394 617 437 665 497" dur="13s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.5;1" keySplines=".42 0 .58 1;.42 0 .58 1"/>
+  </path>
+  <ellipse cx="309" cy="329" rx="42" ry="48" fill="url(#shade-hot)"><animate attributeName="cx" values="309;345;309" dur="13s" repeatCount="indefinite"/></ellipse>
+  <path d="M138 405 C156 532 246 625 346 648" fill="none" stroke="#f8c778" stroke-width="8" filter="url(#shade-soft)" opacity=".65"/>
+  <use href="#shade-shape" fill="url(#shade-edge)"/>
+ </g>
+ <use href="#shade-shape" fill="none" stroke="#eac68d" stroke-opacity=".35" stroke-width="1"/>
+</g>
+<rect width="800" height="760" filter="url(#shade-grain)" opacity=".045" pointer-events="none" data-layer="grain"/>
+</svg><div class="controls"><button class="toggle">Pause</button><span>Live SVG • stage 2</span></div></div><p>A radial gradient blends outward from a center. The bright warm crown and nearly black lower area give a depth cue. The stops are artistic decisions, not a lighting calculation. Bronze appears convincing because the highlights are warm and the shadows remain very dark.</p><p><code>defs</code> stores reusable resources. A definition does not draw itself. The path uses <code>fill="url(#body)"</code> to reference a gradient by its ID. Percentages below are relative to the shape’s bounding box.</p><div class="codebar"><span>React JSX — focused excerpt</span><button class="copy">Copy code</button></div><pre><code>&lt;defs&gt;
+ &lt;radialGradient id=&quot;body&quot; cx=&quot;48%&quot; cy=&quot;23%&quot; r=&quot;78%&quot;&gt;
+  &lt;stop offset=&quot;0&quot; stopColor=&quot;#673519&quot; /&gt;
+  &lt;stop offset=&quot;.32&quot; stopColor=&quot;#3b1c0d&quot; /&gt;
+  &lt;stop offset=&quot;.61&quot; stopColor=&quot;#180c06&quot; /&gt;
+  &lt;stop offset=&quot;.82&quot; stopColor=&quot;#090704&quot; /&gt;
+  &lt;stop offset=&quot;1&quot; stopColor=&quot;#977140&quot; /&gt;
+ &lt;/radialGradient&gt;
+&lt;/defs&gt;
+&lt;path d={SHAPE_A} fill=&quot;url(#body)&quot; /&gt;</code></pre><div class="try"><label><strong>Move the light:</strong> gradient center y <input id="light" type="range" min="5" max="80" value="23"> <output id="light-value">23%</output></label><p>Moving the center changes the shading, even though the path is unchanged. This is the first part of the 3D illusion.</p></div></section><section id="s5"><p class="kicker">LESSON 05</p><h2>Add reflections, then clip them</h2><div class="demo" data-stage="3"><svg viewBox="0 0 800 760" role="img" aria-label="Floating bronze liquid" style="display:block;width:100%;height:100%" xmlns="http://www.w3.org/2000/svg">
+<defs>
+ <radialGradient id="reflect-body" cx="48%" cy="23%" r="78%">
+  <stop stop-color="#673519"/><stop offset=".32" stop-color="#3b1c0d"/>
+  <stop offset=".61" stop-color="#180c06"/><stop offset=".82" stop-color="#090704"/>
+  <stop offset="1" stop-color="#977140"/>
+ </radialGradient>
+ <radialGradient id="reflect-edge"><stop offset=".79" stop-color="#e7ba79" stop-opacity="0"/><stop offset="1" stop-color="#f2cd91" stop-opacity=".45"/></radialGradient>
+ <radialGradient id="reflect-hot"><stop stop-color="#fffef0"/><stop offset=".18" stop-color="#fff0c9" stop-opacity=".97"/><stop offset=".4" stop-color="#ffd28a" stop-opacity=".48"/><stop offset="1" stop-color="#e7a050" stop-opacity="0"/></radialGradient>
+ <radialGradient id="reflect-amber"><stop stop-color="#f6a351" stop-opacity=".9"/><stop offset="1" stop-color="#b96424" stop-opacity="0"/></radialGradient>
+ <linearGradient id="reflect-band"><stop stop-color="#ffda99"/><stop offset=".5" stop-color="#a36f39"/><stop offset="1" stop-color="#e4b16b"/></linearGradient>
+ <filter id="reflect-soft" x="-30%" y="-50%" width="160%" height="200%"><feGaussianBlur stdDeviation="4"/></filter>
+ <filter id="reflect-blur" x="-40%" y="-60%" width="180%" height="220%"><feGaussianBlur stdDeviation="15"/></filter>
+ <filter id="reflect-grain"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter>
+ <path id="reflect-shape" d="M400 100 C502 94 592 137 640 221 C690 306 692 413 640 506 C590 594 500 650 400 650 C296 654 199 604 151 514 C100 424 104 315 148 229 C195 140 294 103 400 100 Z"><animate attributeName="d" values="M400 100 C502 94 592 137 640 221 C690 306 692 413 640 506 C590 594 500 650 400 650 C296 654 199 604 151 514 C100 424 104 315 148 229 C195 140 294 103 400 100 Z;M400 111 C508 99 579 156 621 231 C670 318 697 402 650 491 C607 580 504 637 406 651 C301 669 214 612 162 523 C111 436 99 330 145 245 C193 155 290 115 400 111 Z;M400 94 C498 100 593 147 646 234 C698 321 665 420 620 508 C576 596 496 662 395 648 C292 635 195 600 151 509 C108 418 119 321 158 233 C199 144 296 88 400 94 Z;M400 100 C502 94 592 137 640 221 C690 306 692 413 640 506 C590 594 500 650 400 650 C296 654 199 604 151 514 C100 424 104 315 148 229 C195 140 294 103 400 100 Z" dur="16s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.333;.666;1" keySplines=".42 0 .58 1;.42 0 .58 1;.42 0 .58 1"/></path>
+ <clipPath id="reflect-clip"><use href="#reflect-shape"/></clipPath>
+</defs>
+<g data-layer="float">
+ <animateTransform attributeName="transform" type="translate" values="0 6;0 -8;0 6" dur="8s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.5;1" keySplines=".42 0 .58 1;.42 0 .58 1"/>
+ <use href="#reflect-shape" fill="url(#reflect-body)" data-layer="body"/>
+ <g clip-path="url(#reflect-clip)" data-layer="reflections">
+  <ellipse cx="320" cy="230" rx="83" ry="52" fill="url(#reflect-amber)" filter="url(#reflect-blur)"><animate attributeName="cx" values="320;370;300;320" dur="16s" repeatCount="indefinite"/></ellipse>
+  <path d="M83 346 C197 287 322 348 424 370 C535 394 617 437 665 497" fill="none" stroke="url(#reflect-band)" stroke-width="34" filter="url(#reflect-soft)" opacity=".84">
+   <animate attributeName="d" values="M83 346 C197 287 322 348 424 370 C535 394 617 437 665 497;M83 382 C197 308 322 316 424 350 C535 388 617 472 665 516;M83 346 C197 287 322 348 424 370 C535 394 617 437 665 497" dur="13s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.5;1" keySplines=".42 0 .58 1;.42 0 .58 1"/>
+  </path>
+  <ellipse cx="309" cy="329" rx="42" ry="48" fill="url(#reflect-hot)"><animate attributeName="cx" values="309;345;309" dur="13s" repeatCount="indefinite"/></ellipse>
+  <path d="M138 405 C156 532 246 625 346 648" fill="none" stroke="#f8c778" stroke-width="8" filter="url(#reflect-soft)" opacity=".65"/>
+  <use href="#reflect-shape" fill="url(#reflect-edge)"/>
+ </g>
+ <use href="#reflect-shape" fill="none" stroke="#eac68d" stroke-opacity=".35" stroke-width="1"/>
+</g>
+<rect width="800" height="760" filter="url(#reflect-grain)" opacity=".045" pointer-events="none" data-layer="grain"/>
+</svg><div class="controls"><button class="toggle">Pause</button><span>Live SVG • stage 3</span></div></div><p>A shiny object reflects large light sources as bands. Our gold strip is just a curved path with no fill and a wide stroke. A blurred amber ellipse suggests a soft lamp; a small white-to-transparent gradient makes the concentrated glint.</p><p>Drawing these shapes without restriction would let light spill outside the drop. A <code>clipPath</code> hides everything outside the silhouette. Reusing the same path through <code>use</code> keeps the body, clip, and rim synchronized when the silhouette changes.</p><div class="codebar"><span>React JSX — focused excerpt</span><button class="copy">Copy code</button></div><pre><code>&lt;defs&gt;
+ &lt;path id=&quot;shape&quot; d={SHAPE_A} /&gt;
+ &lt;clipPath id=&quot;clip&quot;&gt;&lt;use href=&quot;#shape&quot; /&gt;&lt;/clipPath&gt;
+ &lt;filter id=&quot;soft&quot; x=&quot;-30%&quot; y=&quot;-50%&quot; width=&quot;160%&quot; height=&quot;200%&quot;&gt;
+  &lt;feGaussianBlur stdDeviation=&quot;4&quot; /&gt;
+ &lt;/filter&gt;
+&lt;/defs&gt;
+&lt;use href=&quot;#shape&quot; fill=&quot;url(#body)&quot; /&gt;
+&lt;g clipPath=&quot;url(#clip)&quot;&gt;
+ &lt;path d=&quot;M83 346 C197 287 322 348 424 370 C535 394 617 437 665 497&quot;
+  fill=&quot;none&quot; stroke=&quot;#c59355&quot; strokeWidth=&quot;34&quot; filter=&quot;url(#soft)&quot; /&gt;
+&lt;/g&gt;</code></pre><div class="try"><label><input id="clip-toggle" type="checkbox" checked> Clip reflections to the drop</label><p>Uncheck to see the wide band extend beyond the surface. Re-enable to restore the material illusion.</p></div><p>Filter bounds are expanded so blur is not abruptly cut off by its own filter rectangle. The clip then intentionally trims the result to the liquid shape. SVG paints in DOM order, so the glint and rim come after the darker body.</p></section><section id="s6"><p class="kicker">LESSON 06</p><h2>Morph compatible paths</h2><div class="demo" data-stage="4"><svg viewBox="0 0 800 760" role="img" aria-label="Floating bronze liquid" style="display:block;width:100%;height:100%" xmlns="http://www.w3.org/2000/svg">
+<defs>
+ <radialGradient id="morph-body" cx="48%" cy="23%" r="78%">
+  <stop stop-color="#673519"/><stop offset=".32" stop-color="#3b1c0d"/>
+  <stop offset=".61" stop-color="#180c06"/><stop offset=".82" stop-color="#090704"/>
+  <stop offset="1" stop-color="#977140"/>
+ </radialGradient>
+ <radialGradient id="morph-edge"><stop offset=".79" stop-color="#e7ba79" stop-opacity="0"/><stop offset="1" stop-color="#f2cd91" stop-opacity=".45"/></radialGradient>
+ <radialGradient id="morph-hot"><stop stop-color="#fffef0"/><stop offset=".18" stop-color="#fff0c9" stop-opacity=".97"/><stop offset=".4" stop-color="#ffd28a" stop-opacity=".48"/><stop offset="1" stop-color="#e7a050" stop-opacity="0"/></radialGradient>
+ <radialGradient id="morph-amber"><stop stop-color="#f6a351" stop-opacity=".9"/><stop offset="1" stop-color="#b96424" stop-opacity="0"/></radialGradient>
+ <linearGradient id="morph-band"><stop stop-color="#ffda99"/><stop offset=".5" stop-color="#a36f39"/><stop offset="1" stop-color="#e4b16b"/></linearGradient>
+ <filter id="morph-soft" x="-30%" y="-50%" width="160%" height="200%"><feGaussianBlur stdDeviation="4"/></filter>
+ <filter id="morph-blur" x="-40%" y="-60%" width="180%" height="220%"><feGaussianBlur stdDeviation="15"/></filter>
+ <filter id="morph-grain"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter>
+ <path id="morph-shape" d="M400 100 C502 94 592 137 640 221 C690 306 692 413 640 506 C590 594 500 650 400 650 C296 654 199 604 151 514 C100 424 104 315 148 229 C195 140 294 103 400 100 Z"><animate attributeName="d" values="M400 100 C502 94 592 137 640 221 C690 306 692 413 640 506 C590 594 500 650 400 650 C296 654 199 604 151 514 C100 424 104 315 148 229 C195 140 294 103 400 100 Z;M400 111 C508 99 579 156 621 231 C670 318 697 402 650 491 C607 580 504 637 406 651 C301 669 214 612 162 523 C111 436 99 330 145 245 C193 155 290 115 400 111 Z;M400 94 C498 100 593 147 646 234 C698 321 665 420 620 508 C576 596 496 662 395 648 C292 635 195 600 151 509 C108 418 119 321 158 233 C199 144 296 88 400 94 Z;M400 100 C502 94 592 137 640 221 C690 306 692 413 640 506 C590 594 500 650 400 650 C296 654 199 604 151 514 C100 424 104 315 148 229 C195 140 294 103 400 100 Z" dur="16s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.333;.666;1" keySplines=".42 0 .58 1;.42 0 .58 1;.42 0 .58 1"/></path>
+ <clipPath id="morph-clip"><use href="#morph-shape"/></clipPath>
+</defs>
+<g data-layer="float">
+ <animateTransform attributeName="transform" type="translate" values="0 6;0 -8;0 6" dur="8s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.5;1" keySplines=".42 0 .58 1;.42 0 .58 1"/>
+ <use href="#morph-shape" fill="url(#morph-body)" data-layer="body"/>
+ <g clip-path="url(#morph-clip)" data-layer="reflections">
+  <ellipse cx="320" cy="230" rx="83" ry="52" fill="url(#morph-amber)" filter="url(#morph-blur)"><animate attributeName="cx" values="320;370;300;320" dur="16s" repeatCount="indefinite"/></ellipse>
+  <path d="M83 346 C197 287 322 348 424 370 C535 394 617 437 665 497" fill="none" stroke="url(#morph-band)" stroke-width="34" filter="url(#morph-soft)" opacity=".84">
+   <animate attributeName="d" values="M83 346 C197 287 322 348 424 370 C535 394 617 437 665 497;M83 382 C197 308 322 316 424 350 C535 388 617 472 665 516;M83 346 C197 287 322 348 424 370 C535 394 617 437 665 497" dur="13s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.5;1" keySplines=".42 0 .58 1;.42 0 .58 1"/>
+  </path>
+  <ellipse cx="309" cy="329" rx="42" ry="48" fill="url(#morph-hot)"><animate attributeName="cx" values="309;345;309" dur="13s" repeatCount="indefinite"/></ellipse>
+  <path d="M138 405 C156 532 246 625 346 648" fill="none" stroke="#f8c778" stroke-width="8" filter="url(#morph-soft)" opacity=".65"/>
+  <use href="#morph-shape" fill="url(#morph-edge)"/>
+ </g>
+ <use href="#morph-shape" fill="none" stroke="#eac68d" stroke-opacity=".35" stroke-width="1"/>
+</g>
+<rect width="800" height="760" filter="url(#morph-grain)" opacity=".045" pointer-events="none" data-layer="grain"/>
+</svg><div class="controls"><button class="toggle">Pause</button><span>Live SVG • stage 4</span></div></div><p>We define three related outlines A, B, and C. All use the same command sequence: M, six C commands, Z. The browser interpolates corresponding numbers. Keep the segment count, command types, and order identical; this approach does not automatically match arbitrary shapes.</p><p>For intuition, a coordinate halfway between 640 and 621 is <code>640 + (621 - 640) × 0.5 = 630.5</code>. The same idea applies to every coordinate. Easing changes how quickly the interpolation fraction progresses.</p><div class="codebar"><span>React JSX — focused excerpt</span><button class="copy">Copy code</button></div><pre><code>&lt;path id=&quot;shape&quot; d={SHAPE_A}&gt;
+ &lt;animate attributeName=&quot;d&quot;
+  values={[SHAPE_A, SHAPE_B, SHAPE_C, SHAPE_A].join(&quot;;&quot;)}
+  dur=&quot;16s&quot; repeatCount=&quot;indefinite&quot;
+  calcMode=&quot;spline&quot; keyTimes=&quot;0;.333;.666;1&quot;
+  keySplines=&quot;.42 0 .58 1;.42 0 .58 1;.42 0 .58 1&quot; /&gt;
+&lt;/path&gt;</code></pre><table><tr><th>Property</th><th>Meaning</th></tr><tr><td>attributeName="d"</td><td>Animate the path geometry.</td></tr><tr><td>values</td><td>Four keyframes; the last repeats A for a seamless return.</td></tr><tr><td>dur="16s"</td><td>Duration of the whole A → B → C → A cycle.</td></tr><tr><td>keyTimes</td><td>Normalized timeline positions, from 0 to 1.</td></tr><tr><td>keySplines</td><td>Three easing curves, one per transition.</td></tr></table><div class="try"><strong>Scrub the timeline:</strong> <input id="scrub" aria-label="Morph timeline" type="range" min="0" max="16" step=".1" value="0"> <output id="scrub-value">0s</output><p>Scrubbing pauses this demo. Use its Play button to continue from that time. Watch the edge; the motion is deliberately subtle.</p></div><p>This is SVG’s declarative animation system, commonly called SMIL. React does not need to update state every frame. The shape repeats after 16 seconds; “continuous” means smooth and ongoing, not mathematically non-repeating.</p></section><section id="s7"><p class="kicker">LESSON 07</p><h2>Separate floating from surface motion</h2><div class="demo" data-stage="5"><svg viewBox="0 0 800 760" role="img" aria-label="Floating bronze liquid" style="display:block;width:100%;height:100%" xmlns="http://www.w3.org/2000/svg">
+<defs>
+ <radialGradient id="motion-body" cx="48%" cy="23%" r="78%">
+  <stop stop-color="#673519"/><stop offset=".32" stop-color="#3b1c0d"/>
+  <stop offset=".61" stop-color="#180c06"/><stop offset=".82" stop-color="#090704"/>
+  <stop offset="1" stop-color="#977140"/>
+ </radialGradient>
+ <radialGradient id="motion-edge"><stop offset=".79" stop-color="#e7ba79" stop-opacity="0"/><stop offset="1" stop-color="#f2cd91" stop-opacity=".45"/></radialGradient>
+ <radialGradient id="motion-hot"><stop stop-color="#fffef0"/><stop offset=".18" stop-color="#fff0c9" stop-opacity=".97"/><stop offset=".4" stop-color="#ffd28a" stop-opacity=".48"/><stop offset="1" stop-color="#e7a050" stop-opacity="0"/></radialGradient>
+ <radialGradient id="motion-amber"><stop stop-color="#f6a351" stop-opacity=".9"/><stop offset="1" stop-color="#b96424" stop-opacity="0"/></radialGradient>
+ <linearGradient id="motion-band"><stop stop-color="#ffda99"/><stop offset=".5" stop-color="#a36f39"/><stop offset="1" stop-color="#e4b16b"/></linearGradient>
+ <filter id="motion-soft" x="-30%" y="-50%" width="160%" height="200%"><feGaussianBlur stdDeviation="4"/></filter>
+ <filter id="motion-blur" x="-40%" y="-60%" width="180%" height="220%"><feGaussianBlur stdDeviation="15"/></filter>
+ <filter id="motion-grain"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter>
+ <path id="motion-shape" d="M400 100 C502 94 592 137 640 221 C690 306 692 413 640 506 C590 594 500 650 400 650 C296 654 199 604 151 514 C100 424 104 315 148 229 C195 140 294 103 400 100 Z"><animate attributeName="d" values="M400 100 C502 94 592 137 640 221 C690 306 692 413 640 506 C590 594 500 650 400 650 C296 654 199 604 151 514 C100 424 104 315 148 229 C195 140 294 103 400 100 Z;M400 111 C508 99 579 156 621 231 C670 318 697 402 650 491 C607 580 504 637 406 651 C301 669 214 612 162 523 C111 436 99 330 145 245 C193 155 290 115 400 111 Z;M400 94 C498 100 593 147 646 234 C698 321 665 420 620 508 C576 596 496 662 395 648 C292 635 195 600 151 509 C108 418 119 321 158 233 C199 144 296 88 400 94 Z;M400 100 C502 94 592 137 640 221 C690 306 692 413 640 506 C590 594 500 650 400 650 C296 654 199 604 151 514 C100 424 104 315 148 229 C195 140 294 103 400 100 Z" dur="16s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.333;.666;1" keySplines=".42 0 .58 1;.42 0 .58 1;.42 0 .58 1"/></path>
+ <clipPath id="motion-clip"><use href="#motion-shape"/></clipPath>
+</defs>
+<g data-layer="float">
+ <animateTransform attributeName="transform" type="translate" values="0 6;0 -8;0 6" dur="8s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.5;1" keySplines=".42 0 .58 1;.42 0 .58 1"/>
+ <use href="#motion-shape" fill="url(#motion-body)" data-layer="body"/>
+ <g clip-path="url(#motion-clip)" data-layer="reflections">
+  <ellipse cx="320" cy="230" rx="83" ry="52" fill="url(#motion-amber)" filter="url(#motion-blur)"><animate attributeName="cx" values="320;370;300;320" dur="16s" repeatCount="indefinite"/></ellipse>
+  <path d="M83 346 C197 287 322 348 424 370 C535 394 617 437 665 497" fill="none" stroke="url(#motion-band)" stroke-width="34" filter="url(#motion-soft)" opacity=".84">
+   <animate attributeName="d" values="M83 346 C197 287 322 348 424 370 C535 394 617 437 665 497;M83 382 C197 308 322 316 424 350 C535 388 617 472 665 516;M83 346 C197 287 322 348 424 370 C535 394 617 437 665 497" dur="13s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.5;1" keySplines=".42 0 .58 1;.42 0 .58 1"/>
+  </path>
+  <ellipse cx="309" cy="329" rx="42" ry="48" fill="url(#motion-hot)"><animate attributeName="cx" values="309;345;309" dur="13s" repeatCount="indefinite"/></ellipse>
+  <path d="M138 405 C156 532 246 625 346 648" fill="none" stroke="#f8c778" stroke-width="8" filter="url(#motion-soft)" opacity=".65"/>
+  <use href="#motion-shape" fill="url(#motion-edge)"/>
+ </g>
+ <use href="#motion-shape" fill="none" stroke="#eac68d" stroke-opacity=".35" stroke-width="1"/>
+</g>
+<rect width="800" height="760" filter="url(#motion-grain)" opacity=".045" pointer-events="none" data-layer="grain"/>
+</svg><div class="controls"><button class="toggle">Pause</button><span>Live SVG • final composition</span></div></div><p>Wrap the drop in a group and translate that group up and down. Inside it, the silhouette morphs over 16 seconds, while the reflection sweeps over 13 seconds. Different durations make the combined motion less obviously synchronized.</p><div class="codebar"><span>React JSX — focused excerpt</span><button class="copy">Copy code</button></div><pre><code>&lt;g&gt;
+ &lt;animateTransform attributeName=&quot;transform&quot; type=&quot;translate&quot;
+  values=&quot;0 6;0 -8;0 6&quot; dur=&quot;8s&quot; repeatCount=&quot;indefinite&quot;
+  calcMode=&quot;spline&quot; keyTimes=&quot;0;.5;1&quot;
+  keySplines=&quot;.42 0 .58 1;.42 0 .58 1&quot; /&gt;
+ {/* body, clipped highlights, and rim go here */}
+&lt;/g&gt;</code></pre><p>Keep transformation ownership separate. If you later add pointer rotation, put it on an outer group instead of overwriting this group’s animated transform. A displacement filter could add ripples, but it is unnecessary for this smooth, restrained look.</p><h3>Finish with a small amount of grain</h3><p>Static fractal noise adds surface texture to the composition. It is an aesthetic overlay, not a simulation of the metal. Lower opacity is usually better.</p><div class="codebar"><span>React JSX — focused excerpt</span><button class="copy">Copy code</button></div><pre><code>&lt;filter id=&quot;grain&quot;&gt;
+ &lt;feTurbulence type=&quot;fractalNoise&quot; baseFrequency=&quot;.85&quot;
+  numOctaves=&quot;3&quot; stitchTiles=&quot;stitch&quot; /&gt;
+ &lt;feColorMatrix type=&quot;saturate&quot; values=&quot;0&quot; /&gt;
+&lt;/filter&gt;
+&lt;rect width=&quot;800&quot; height=&quot;760&quot; filter=&quot;url(#grain)&quot;
+ opacity=&quot;.045&quot; pointerEvents=&quot;none&quot; /&gt;</code></pre></section><section id="s8"><p class="kicker">LESSON 08</p><h2>Bring it into React correctly</h2><p>SVG belongs directly inside JSX. Convert hyphenated attributes such as <code>stroke-width</code> to <code>strokeWidth</code> and <code>clip-path</code> to <code>clipPath</code>. Keep <code>aria-label</code> hyphenated. CSS style strings become objects.</p><p>Use a ref to access the SVG timeline. React state represents the desired paused state. An effect applies that state to the SVG. Avoid changing button text manually in React: derive it from state.</p><div class="codebar"><span>React JSX — focused excerpt</span><button class="copy">Copy code</button></div><pre><code>const svgRef = useRef(null);
+const [paused, setPaused] = useState(false);
+useEffect(() =&gt; {
+ const svg = svgRef.current;
+ if (!svg) return;
+ if (paused) svg.pauseAnimations();
+ else svg.unpauseAnimations();
+}, [paused]);
+// In the JSX:
+&lt;svg ref={svgRef}&gt;...&lt;/svg&gt;
+&lt;button onClick={() =&gt; setPaused(p =&gt; !p)}&gt;
+ {paused ? &quot;Play animation&quot; : &quot;Pause animation&quot;}
+&lt;/button&gt;</code></pre><h3>Make each instance independent</h3><p>If two drops share IDs like “body” or “clip”, fragment references can point to the wrong resource. Generate a unique prefix once per component with <code>useId</code>, then use it for every definition and reference. Do not generate random IDs during render.</p><div class="codebar"><span>React JSX — focused excerpt</span><button class="copy">Copy code</button></div><pre><code>const id = useId();
+&lt;radialGradient id={`${id}-body`}&gt;...&lt;/radialGradient&gt;
+&lt;path fill={`url(#${id}-body)`} d={SHAPE_A} /&gt;</code></pre><h3>Respect motion preferences</h3><p>CSS reduced-motion rules alone do not stop SVG SMIL. Read the media query and pause the SVG timeline. The complete component subscribes to preference changes and removes its listener on unmount. Its Play button lets someone explicitly resume the animation.</p><p>For a purely decorative background, use <code>aria-hidden="true"</code> on the SVG and keep meaningful text outside it. In this standalone study we provide an accessible image label.</p></section><section id="s9"><p class="kicker">LESSON 09</p><h2>Use the complete component</h2><p>This is the full JavaScript/JSX implementation. Copy it to <code>BronzeLiquid.jsx</code> in an existing React project. It includes the SVG, all three paths, per-instance IDs, controls, and reduced-motion handling. It has no animation dependencies.</p><p>In Next.js App Router, keep the <code>"use client"</code> directive because the component uses hooks and browser methods. In a standard React client app it is harmless. If converting to TypeScript, type the ref as <code>useRef&lt;SVGSVGElement | null&gt;(null)</code>.</p><button id="download-react">Download BronzeLiquid.jsx</button><div class="codebar"><span>BronzeLiquid.jsx — COMPLETE component</span><button class="copy">Copy code</button></div><pre><code>&quot;use client&quot;;
+import { useEffect, useId, useRef, useState } from &quot;react&quot;;
+
+// Self-contained: no animation packages or external styles.
+export default function BronzeLiquid() {
+ const id = useId(); // Unique gradient, filter and clip IDs for every instance.
+ const svgRef = useRef(null);
+ const [paused, setPaused] = useState(false);
+ useEffect(() =&gt; {
+   const media = window.matchMedia(&quot;(prefers-reduced-motion: reduce)&quot;);
+   const sync = () =&gt; setPaused(media.matches);
+   sync();
+   media.addEventListener(&quot;change&quot;, sync);
+   return () =&gt; media.removeEventListener(&quot;change&quot;, sync);
+ }, []);
+ useEffect(() =&gt; {
+   const svg = svgRef.current;
+   if (!svg) return;
+   if (paused) svg.pauseAnimations();
+   else svg.unpauseAnimations();
+ }, [paused]);
+ return (
+  &lt;section style={{ position: &quot;relative&quot;, background: &quot;#090704&quot;, color: &quot;#e7e3d7&quot;, maxWidth: 900, margin: &quot;auto&quot; }}&gt;
+   &lt;div style={{ aspectRatio: &quot;800 / 760&quot; }}&gt;
+&lt;svg viewBox=&quot;0 0 800 760&quot; role=&quot;img&quot; aria-label=&quot;Floating bronze liquid&quot; ref={svgRef} style={{ display: &quot;block&quot;, width: &quot;100%&quot;, height: &quot;100%&quot; }}&gt;
+&lt;defs&gt;
+ &lt;radialGradient id={`${id}-body`} cx=&quot;48%&quot; cy=&quot;23%&quot; r=&quot;78%&quot;&gt;
+  &lt;stop stopColor=&quot;#673519&quot;/&gt;&lt;stop offset=&quot;.32&quot; stopColor=&quot;#3b1c0d&quot;/&gt;
+  &lt;stop offset=&quot;.61&quot; stopColor=&quot;#180c06&quot;/&gt;&lt;stop offset=&quot;.82&quot; stopColor=&quot;#090704&quot;/&gt;
+  &lt;stop offset=&quot;1&quot; stopColor=&quot;#977140&quot;/&gt;
+ &lt;/radialGradient&gt;
+ &lt;radialGradient id={`${id}-edge`}&gt;&lt;stop offset=&quot;.79&quot; stopColor=&quot;#e7ba79&quot; stopOpacity=&quot;0&quot;/&gt;&lt;stop offset=&quot;1&quot; stopColor=&quot;#f2cd91&quot; stopOpacity=&quot;.45&quot;/&gt;&lt;/radialGradient&gt;
+ &lt;radialGradient id={`${id}-hot`}&gt;&lt;stop stopColor=&quot;#fffef0&quot;/&gt;&lt;stop offset=&quot;.18&quot; stopColor=&quot;#fff0c9&quot; stopOpacity=&quot;.97&quot;/&gt;&lt;stop offset=&quot;.4&quot; stopColor=&quot;#ffd28a&quot; stopOpacity=&quot;.48&quot;/&gt;&lt;stop offset=&quot;1&quot; stopColor=&quot;#e7a050&quot; stopOpacity=&quot;0&quot;/&gt;&lt;/radialGradient&gt;
+ &lt;radialGradient id={`${id}-amber`}&gt;&lt;stop stopColor=&quot;#f6a351&quot; stopOpacity=&quot;.9&quot;/&gt;&lt;stop offset=&quot;1&quot; stopColor=&quot;#b96424&quot; stopOpacity=&quot;0&quot;/&gt;&lt;/radialGradient&gt;
+ &lt;linearGradient id={`${id}-band`}&gt;&lt;stop stopColor=&quot;#ffda99&quot;/&gt;&lt;stop offset=&quot;.5&quot; stopColor=&quot;#a36f39&quot;/&gt;&lt;stop offset=&quot;1&quot; stopColor=&quot;#e4b16b&quot;/&gt;&lt;/linearGradient&gt;
+ &lt;filter id={`${id}-soft`} x=&quot;-30%&quot; y=&quot;-50%&quot; width=&quot;160%&quot; height=&quot;200%&quot;&gt;&lt;feGaussianBlur stdDeviation=&quot;4&quot;/&gt;&lt;/filter&gt;
+ &lt;filter id={`${id}-blur`} x=&quot;-40%&quot; y=&quot;-60%&quot; width=&quot;180%&quot; height=&quot;220%&quot;&gt;&lt;feGaussianBlur stdDeviation=&quot;15&quot;/&gt;&lt;/filter&gt;
+ &lt;filter id={`${id}-grain`}&gt;&lt;feTurbulence type=&quot;fractalNoise&quot; baseFrequency=&quot;.85&quot; numOctaves=&quot;3&quot; stitchTiles=&quot;stitch&quot;/&gt;&lt;feColorMatrix type=&quot;saturate&quot; values=&quot;0&quot;/&gt;&lt;/filter&gt;
+ &lt;path id={`${id}-shape`} d=&quot;M400 100 C502 94 592 137 640 221 C690 306 692 413 640 506 C590 594 500 650 400 650 C296 654 199 604 151 514 C100 424 104 315 148 229 C195 140 294 103 400 100 Z&quot;&gt;&lt;animate attributeName=&quot;d&quot; values=&quot;M400 100 C502 94 592 137 640 221 C690 306 692 413 640 506 C590 594 500 650 400 650 C296 654 199 604 151 514 C100 424 104 315 148 229 C195 140 294 103 400 100 Z;M400 111 C508 99 579 156 621 231 C670 318 697 402 650 491 C607 580 504 637 406 651 C301 669 214 612 162 523 C111 436 99 330 145 245 C193 155 290 115 400 111 Z;M400 94 C498 100 593 147 646 234 C698 321 665 420 620 508 C576 596 496 662 395 648 C292 635 195 600 151 509 C108 418 119 321 158 233 C199 144 296 88 400 94 Z;M400 100 C502 94 592 137 640 221 C690 306 692 413 640 506 C590 594 500 650 400 650 C296 654 199 604 151 514 C100 424 104 315 148 229 C195 140 294 103 400 100 Z&quot; dur=&quot;16s&quot; repeatCount=&quot;indefinite&quot; calcMode=&quot;spline&quot; keyTimes=&quot;0;.333;.666;1&quot; keySplines=&quot;.42 0 .58 1;.42 0 .58 1;.42 0 .58 1&quot;/&gt;&lt;/path&gt;
+ &lt;clipPath id={`${id}-clip`}&gt;&lt;use href={`#${id}-shape`}/&gt;&lt;/clipPath&gt;
+&lt;/defs&gt;
+&lt;g data-layer=&quot;float&quot;&gt;
+ &lt;animateTransform attributeName=&quot;transform&quot; type=&quot;translate&quot; values=&quot;0 6;0 -8;0 6&quot; dur=&quot;8s&quot; repeatCount=&quot;indefinite&quot; calcMode=&quot;spline&quot; keyTimes=&quot;0;.5;1&quot; keySplines=&quot;.42 0 .58 1;.42 0 .58 1&quot;/&gt;
+ &lt;use href={`#${id}-shape`} fill={`url(#${id}-body)`} data-layer=&quot;body&quot;/&gt;
+ &lt;g clipPath={`url(#${id}-clip)`} data-layer=&quot;reflections&quot;&gt;
+  &lt;ellipse cx=&quot;320&quot; cy=&quot;230&quot; rx=&quot;83&quot; ry=&quot;52&quot; fill={`url(#${id}-amber)`} filter={`url(#${id}-blur)`}&gt;&lt;animate attributeName=&quot;cx&quot; values=&quot;320;370;300;320&quot; dur=&quot;16s&quot; repeatCount=&quot;indefinite&quot;/&gt;&lt;/ellipse&gt;
+  &lt;path d=&quot;M83 346 C197 287 322 348 424 370 C535 394 617 437 665 497&quot; fill=&quot;none&quot; stroke={`url(#${id}-band)`} strokeWidth=&quot;34&quot; filter={`url(#${id}-soft)`} opacity=&quot;.84&quot;&gt;
+   &lt;animate attributeName=&quot;d&quot; values=&quot;M83 346 C197 287 322 348 424 370 C535 394 617 437 665 497;M83 382 C197 308 322 316 424 350 C535 388 617 472 665 516;M83 346 C197 287 322 348 424 370 C535 394 617 437 665 497&quot; dur=&quot;13s&quot; repeatCount=&quot;indefinite&quot; calcMode=&quot;spline&quot; keyTimes=&quot;0;.5;1&quot; keySplines=&quot;.42 0 .58 1;.42 0 .58 1&quot;/&gt;
+  &lt;/path&gt;
+  &lt;ellipse cx=&quot;309&quot; cy=&quot;329&quot; rx=&quot;42&quot; ry=&quot;48&quot; fill={`url(#${id}-hot)`}&gt;&lt;animate attributeName=&quot;cx&quot; values=&quot;309;345;309&quot; dur=&quot;13s&quot; repeatCount=&quot;indefinite&quot;/&gt;&lt;/ellipse&gt;
+  &lt;path d=&quot;M138 405 C156 532 246 625 346 648&quot; fill=&quot;none&quot; stroke=&quot;#f8c778&quot; strokeWidth=&quot;8&quot; filter={`url(#${id}-soft)`} opacity=&quot;.65&quot;/&gt;
+  &lt;use href={`#${id}-shape`} fill={`url(#${id}-edge)`}/&gt;
+ &lt;/g&gt;
+ &lt;use href={`#${id}-shape`} fill=&quot;none&quot; stroke=&quot;#eac68d&quot; strokeOpacity=&quot;.35&quot; strokeWidth=&quot;1&quot;/&gt;
+&lt;/g&gt;
+&lt;rect width=&quot;800&quot; height=&quot;760&quot; filter={`url(#${id}-grain)`} opacity=&quot;.045&quot; pointerEvents=&quot;none&quot; data-layer=&quot;grain&quot;/&gt;
+&lt;/svg&gt;
+   &lt;/div&gt;
+   &lt;button type=&quot;button&quot; aria-pressed={paused} onClick={() =&gt; setPaused(p =&gt; !p)}
+    style={{ position: &quot;absolute&quot;, bottom: 20, right: 20, padding: &quot;10px 18px&quot;, border: &quot;1px solid #80603c&quot;, borderRadius: 24, color: &quot;#ead7b8&quot;, background: &quot;#211509&quot;, cursor: &quot;pointer&quot; }}&gt;
+    {paused ? &quot;Play animation&quot; : &quot;Pause animation&quot;}
+   &lt;/button&gt;
+  &lt;/section&gt;
+ );
+}</code></pre><div class="codebar"><span>App.jsx — complete usage example</span><button class="copy">Copy code</button></div><pre><code>import BronzeLiquid from &quot;./BronzeLiquid&quot;;
+
+export default function App() {
+ return &lt;main&gt;&lt;BronzeLiquid /&gt;&lt;/main&gt;;
+}</code></pre><p>To use this behind a hero, give the parent <code>position: relative</code>, place the drop inside an absolutely positioned background wrapper, and place text in a sibling with <code>position: relative</code>. Keep controls clickable; apply <code>pointer-events: none</code> only to purely decorative layers.</p></section><section id="s10"><p class="kicker">LESSON 10</p><h2>Debug, experiment, and finish</h2><table><tr><th>Symptom</th><th>Check</th></tr><tr><td>Shape jumps instead of morphing</td><td>Same path commands and number of coordinates in every keyframe?</td></tr><tr><td>Drop is flat</td><td>Enough contrast? Dark body plus a narrow bright reflection?</td></tr><tr><td>Harsh rectangular blur edge</td><td>Expand filter x/y/width/height bounds.</td></tr><tr><td>Second component looks wrong</td><td>Unique IDs for every gradient, filter, path and clip?</td></tr><tr><td>Pause does not work</td><td>Call pauseAnimations on the outer SVG, not a path or group.</td></tr><tr><td>Animation starts paused</td><td>Check the operating system’s reduced-motion setting.</td></tr><tr><td>Phone rendering is expensive</td><td>Remove grain first, reduce filter area, and avoid many large blurred copies. Profile before adding complexity.</td></tr></table><h3>Three practice tasks</h3><ol><li>Make a silver version: replace warm stops with neutral grays, keep near-white highlights and dark shadows.</li><li>Make a slower version: double all three durations. Predict the new complete shape cycle before running it.</li><li>Render two drops side by side, pause only one, and verify their gradients and clips stay independent.</li></ol><details><summary>Why not simply use border-radius animation?</summary><p>It can make a quick blob, but gives less direct control over local curvature. SVG lets us shape individual curves and reuse the exact outline for clipping reflections.</p></details><details><summary>When would Three.js become useful?</summary><p>When you need a real camera, surface normals, scene lighting, environment reflections, or geometry that responds naturally to rotation. This SVG technique is best for an art-directed hero illustration with a fixed viewpoint.</p></details><h3>Your finished result</h3><div class="demo" data-stage="5"><svg viewBox="0 0 800 760" role="img" aria-label="Floating bronze liquid" style="display:block;width:100%;height:100%" xmlns="http://www.w3.org/2000/svg">
+<defs>
+ <radialGradient id="finish-body" cx="48%" cy="23%" r="78%">
+  <stop stop-color="#673519"/><stop offset=".32" stop-color="#3b1c0d"/>
+  <stop offset=".61" stop-color="#180c06"/><stop offset=".82" stop-color="#090704"/>
+  <stop offset="1" stop-color="#977140"/>
+ </radialGradient>
+ <radialGradient id="finish-edge"><stop offset=".79" stop-color="#e7ba79" stop-opacity="0"/><stop offset="1" stop-color="#f2cd91" stop-opacity=".45"/></radialGradient>
+ <radialGradient id="finish-hot"><stop stop-color="#fffef0"/><stop offset=".18" stop-color="#fff0c9" stop-opacity=".97"/><stop offset=".4" stop-color="#ffd28a" stop-opacity=".48"/><stop offset="1" stop-color="#e7a050" stop-opacity="0"/></radialGradient>
+ <radialGradient id="finish-amber"><stop stop-color="#f6a351" stop-opacity=".9"/><stop offset="1" stop-color="#b96424" stop-opacity="0"/></radialGradient>
+ <linearGradient id="finish-band"><stop stop-color="#ffda99"/><stop offset=".5" stop-color="#a36f39"/><stop offset="1" stop-color="#e4b16b"/></linearGradient>
+ <filter id="finish-soft" x="-30%" y="-50%" width="160%" height="200%"><feGaussianBlur stdDeviation="4"/></filter>
+ <filter id="finish-blur" x="-40%" y="-60%" width="180%" height="220%"><feGaussianBlur stdDeviation="15"/></filter>
+ <filter id="finish-grain"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter>
+ <path id="finish-shape" d="M400 100 C502 94 592 137 640 221 C690 306 692 413 640 506 C590 594 500 650 400 650 C296 654 199 604 151 514 C100 424 104 315 148 229 C195 140 294 103 400 100 Z"><animate attributeName="d" values="M400 100 C502 94 592 137 640 221 C690 306 692 413 640 506 C590 594 500 650 400 650 C296 654 199 604 151 514 C100 424 104 315 148 229 C195 140 294 103 400 100 Z;M400 111 C508 99 579 156 621 231 C670 318 697 402 650 491 C607 580 504 637 406 651 C301 669 214 612 162 523 C111 436 99 330 145 245 C193 155 290 115 400 111 Z;M400 94 C498 100 593 147 646 234 C698 321 665 420 620 508 C576 596 496 662 395 648 C292 635 195 600 151 509 C108 418 119 321 158 233 C199 144 296 88 400 94 Z;M400 100 C502 94 592 137 640 221 C690 306 692 413 640 506 C590 594 500 650 400 650 C296 654 199 604 151 514 C100 424 104 315 148 229 C195 140 294 103 400 100 Z" dur="16s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.333;.666;1" keySplines=".42 0 .58 1;.42 0 .58 1;.42 0 .58 1"/></path>
+ <clipPath id="finish-clip"><use href="#finish-shape"/></clipPath>
+</defs>
+<g data-layer="float">
+ <animateTransform attributeName="transform" type="translate" values="0 6;0 -8;0 6" dur="8s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.5;1" keySplines=".42 0 .58 1;.42 0 .58 1"/>
+ <use href="#finish-shape" fill="url(#finish-body)" data-layer="body"/>
+ <g clip-path="url(#finish-clip)" data-layer="reflections">
+  <ellipse cx="320" cy="230" rx="83" ry="52" fill="url(#finish-amber)" filter="url(#finish-blur)"><animate attributeName="cx" values="320;370;300;320" dur="16s" repeatCount="indefinite"/></ellipse>
+  <path d="M83 346 C197 287 322 348 424 370 C535 394 617 437 665 497" fill="none" stroke="url(#finish-band)" stroke-width="34" filter="url(#finish-soft)" opacity=".84">
+   <animate attributeName="d" values="M83 346 C197 287 322 348 424 370 C535 394 617 437 665 497;M83 382 C197 308 322 316 424 350 C535 388 617 472 665 516;M83 346 C197 287 322 348 424 370 C535 394 617 437 665 497" dur="13s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.5;1" keySplines=".42 0 .58 1;.42 0 .58 1"/>
+  </path>
+  <ellipse cx="309" cy="329" rx="42" ry="48" fill="url(#finish-hot)"><animate attributeName="cx" values="309;345;309" dur="13s" repeatCount="indefinite"/></ellipse>
+  <path d="M138 405 C156 532 246 625 346 648" fill="none" stroke="#f8c778" stroke-width="8" filter="url(#finish-soft)" opacity=".65"/>
+  <use href="#finish-shape" fill="url(#finish-edge)"/>
+ </g>
+ <use href="#finish-shape" fill="none" stroke="#eac68d" stroke-opacity=".35" stroke-width="1"/>
+</g>
+<rect width="800" height="760" filter="url(#finish-grain)" opacity=".045" pointer-events="none" data-layer="grain"/>
+</svg><div class="controls"><button class="toggle">Pause</button><span>Live SVG • final composition</span></div></div><p>You now have a reusable React animation built from geometry, shading, clipping, and independent timelines. The live demonstrations and the complete React source share the same SVG artwork.</p><h3>Further reading</h3><ul><li><a href="https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/animate">MDN: SVG animate</a> — attribute animation and motion accessibility.</li><li><a href="https://react.dev/reference/react/useId">React: useId</a> — stable instance-specific identifiers.</li><li><a href="https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Paths">MDN: SVG paths</a> — Bézier curve commands.</li></ul><p class="quiet">The examples work offline. Documentation links require internet. Browser file previews may restrict scripts; download and open this HTML in your browser for all controls.</p></section></main></div><footer>Built to explore. Read → change → observe → rebuild.</footer><script>const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+function setPause(svg,paused){if(paused)svg.pauseAnimations();else svg.unpauseAnimations();const b=svg.parentElement.querySelector('.toggle');if(b)b.textContent=paused?'Play':'Pause';}
+document.querySelectorAll('.demo').forEach(box=>{const svg=box.querySelector('svg');const stage=+box.dataset.stage;if(!stage)return;
+ if(stage<5)svg.querySelector('animateTransform')?.remove();
+ if(stage<4)svg.querySelectorAll('animate').forEach(a=>a.remove());
+ if(stage<3)svg.querySelector('[data-layer="reflections"]').style.display='none';
+ if(stage<5)svg.querySelector('[data-layer="grain"]').style.display='none';
+ if(stage===1)svg.querySelector('[data-layer="body"]').setAttribute('fill','#87552f');
+ const b=box.querySelector('.toggle');if(stage<4){b.hidden=true;}else{b.onclick=()=>setPause(svg,!svg.animationsPaused());}
+ if(reduced.matches)setPause(svg,true);
+});
+reduced.addEventListener('change',e=>document.querySelectorAll('.demo svg').forEach(s=>setPause(s,e.matches)));
+const bend=document.querySelector('#bend');bend.oninput=()=>{const y=bend.value;document.querySelector('#curve').setAttribute('d',`M70 230 C180 ${y} 420 ${y} 530 230`);document.querySelector('#handles').setAttribute('d',`M70 230 L180 ${y} M420 ${y} L530 230`);document.querySelectorAll('#cp1,#cp2').forEach(c=>c.setAttribute('cy',y));document.querySelector('#bend-value').textContent=y;};
+document.querySelector('#light').oninput=e=>{document.querySelector('#shade-body').setAttribute('cy',e.target.value+'%');document.querySelector('#light-value').textContent=e.target.value+'%';};
+document.querySelector('#clip-toggle').onchange=e=>document.querySelector('#reflect-clip').closest('svg').querySelector('[data-layer="reflections"]').setAttribute('clip-path',e.target.checked?'url(#reflect-clip)':'none');
+document.querySelector('#scrub').oninput=e=>{const s=document.querySelector('#morph-shape').closest('svg');setPause(s,true);s.setCurrentTime(+e.target.value);document.querySelector('#scrub-value').textContent=e.target.value+'s';};
+document.querySelectorAll('.copy').forEach(b=>b.onclick=async()=>{const pre=b.parentElement.nextElementSibling;try{await navigator.clipboard.writeText(pre.textContent);b.textContent='Copied';}catch{const range=document.createRange();range.selectNodeContents(pre);const selection=getSelection();selection.removeAllRanges();selection.addRange(range);b.textContent='Selected — press Ctrl/Cmd+C';}});
+document.querySelector('#download-react').onclick=()=>{const blob=new Blob(["\"use client\";\nimport { useEffect, useId, useRef, useState } from \"react\";\n\n// Self-contained: no animation packages or external styles.\nexport default function BronzeLiquid() {\n const id = useId(); // Unique gradient, filter and clip IDs for every instance.\n const svgRef = useRef(null);\n const [paused, setPaused] = useState(false);\n useEffect(() => {\n   const media = window.matchMedia(\"(prefers-reduced-motion: reduce)\");\n   const sync = () => setPaused(media.matches);\n   sync();\n   media.addEventListener(\"change\", sync);\n   return () => media.removeEventListener(\"change\", sync);\n }, []);\n useEffect(() => {\n   const svg = svgRef.current;\n   if (!svg) return;\n   if (paused) svg.pauseAnimations();\n   else svg.unpauseAnimations();\n }, [paused]);\n return (\n  <section style={{ position: \"relative\", background: \"#090704\", color: \"#e7e3d7\", maxWidth: 900, margin: \"auto\" }}>\n   <div style={{ aspectRatio: \"800 / 760\" }}>\n<svg viewBox=\"0 0 800 760\" role=\"img\" aria-label=\"Floating bronze liquid\" ref={svgRef} style={{ display: \"block\", width: \"100%\", height: \"100%\" }}>\n<defs>\n <radialGradient id={`${id}-body`} cx=\"48%\" cy=\"23%\" r=\"78%\">\n  <stop stopColor=\"#673519\"/><stop offset=\".32\" stopColor=\"#3b1c0d\"/>\n  <stop offset=\".61\" stopColor=\"#180c06\"/><stop offset=\".82\" stopColor=\"#090704\"/>\n  <stop offset=\"1\" stopColor=\"#977140\"/>\n </radialGradient>\n <radialGradient id={`${id}-edge`}><stop offset=\".79\" stopColor=\"#e7ba79\" stopOpacity=\"0\"/><stop offset=\"1\" stopColor=\"#f2cd91\" stopOpacity=\".45\"/></radialGradient>\n <radialGradient id={`${id}-hot`}><stop stopColor=\"#fffef0\"/><stop offset=\".18\" stopColor=\"#fff0c9\" stopOpacity=\".97\"/><stop offset=\".4\" stopColor=\"#ffd28a\" stopOpacity=\".48\"/><stop offset=\"1\" stopColor=\"#e7a050\" stopOpacity=\"0\"/></radialGradient>\n <radialGradient id={`${id}-amber`}><stop stopColor=\"#f6a351\" stopOpacity=\".9\"/><stop offset=\"1\" stopColor=\"#b96424\" stopOpacity=\"0\"/></radialGradient>\n <linearGradient id={`${id}-band`}><stop stopColor=\"#ffda99\"/><stop offset=\".5\" stopColor=\"#a36f39\"/><stop offset=\"1\" stopColor=\"#e4b16b\"/></linearGradient>\n <filter id={`${id}-soft`} x=\"-30%\" y=\"-50%\" width=\"160%\" height=\"200%\"><feGaussianBlur stdDeviation=\"4\"/></filter>\n <filter id={`${id}-blur`} x=\"-40%\" y=\"-60%\" width=\"180%\" height=\"220%\"><feGaussianBlur stdDeviation=\"15\"/></filter>\n <filter id={`${id}-grain`}><feTurbulence type=\"fractalNoise\" baseFrequency=\".85\" numOctaves=\"3\" stitchTiles=\"stitch\"/><feColorMatrix type=\"saturate\" values=\"0\"/></filter>\n <path id={`${id}-shape`} d=\"M400 100 C502 94 592 137 640 221 C690 306 692 413 640 506 C590 594 500 650 400 650 C296 654 199 604 151 514 C100 424 104 315 148 229 C195 140 294 103 400 100 Z\"><animate attributeName=\"d\" values=\"M400 100 C502 94 592 137 640 221 C690 306 692 413 640 506 C590 594 500 650 400 650 C296 654 199 604 151 514 C100 424 104 315 148 229 C195 140 294 103 400 100 Z;M400 111 C508 99 579 156 621 231 C670 318 697 402 650 491 C607 580 504 637 406 651 C301 669 214 612 162 523 C111 436 99 330 145 245 C193 155 290 115 400 111 Z;M400 94 C498 100 593 147 646 234 C698 321 665 420 620 508 C576 596 496 662 395 648 C292 635 195 600 151 509 C108 418 119 321 158 233 C199 144 296 88 400 94 Z;M400 100 C502 94 592 137 640 221 C690 306 692 413 640 506 C590 594 500 650 400 650 C296 654 199 604 151 514 C100 424 104 315 148 229 C195 140 294 103 400 100 Z\" dur=\"16s\" repeatCount=\"indefinite\" calcMode=\"spline\" keyTimes=\"0;.333;.666;1\" keySplines=\".42 0 .58 1;.42 0 .58 1;.42 0 .58 1\"/></path>\n <clipPath id={`${id}-clip`}><use href={`#${id}-shape`}/></clipPath>\n</defs>\n<g data-layer=\"float\">\n <animateTransform attributeName=\"transform\" type=\"translate\" values=\"0 6;0 -8;0 6\" dur=\"8s\" repeatCount=\"indefinite\" calcMode=\"spline\" keyTimes=\"0;.5;1\" keySplines=\".42 0 .58 1;.42 0 .58 1\"/>\n <use href={`#${id}-shape`} fill={`url(#${id}-body)`} data-layer=\"body\"/>\n <g clipPath={`url(#${id}-clip)`} data-layer=\"reflections\">\n  <ellipse cx=\"320\" cy=\"230\" rx=\"83\" ry=\"52\" fill={`url(#${id}-amber)`} filter={`url(#${id}-blur)`}><animate attributeName=\"cx\" values=\"320;370;300;320\" dur=\"16s\" repeatCount=\"indefinite\"/></ellipse>\n  <path d=\"M83 346 C197 287 322 348 424 370 C535 394 617 437 665 497\" fill=\"none\" stroke={`url(#${id}-band)`} strokeWidth=\"34\" filter={`url(#${id}-soft)`} opacity=\".84\">\n   <animate attributeName=\"d\" values=\"M83 346 C197 287 322 348 424 370 C535 394 617 437 665 497;M83 382 C197 308 322 316 424 350 C535 388 617 472 665 516;M83 346 C197 287 322 348 424 370 C535 394 617 437 665 497\" dur=\"13s\" repeatCount=\"indefinite\" calcMode=\"spline\" keyTimes=\"0;.5;1\" keySplines=\".42 0 .58 1;.42 0 .58 1\"/>\n  </path>\n  <ellipse cx=\"309\" cy=\"329\" rx=\"42\" ry=\"48\" fill={`url(#${id}-hot)`}><animate attributeName=\"cx\" values=\"309;345;309\" dur=\"13s\" repeatCount=\"indefinite\"/></ellipse>\n  <path d=\"M138 405 C156 532 246 625 346 648\" fill=\"none\" stroke=\"#f8c778\" strokeWidth=\"8\" filter={`url(#${id}-soft)`} opacity=\".65\"/>\n  <use href={`#${id}-shape`} fill={`url(#${id}-edge)`}/>\n </g>\n <use href={`#${id}-shape`} fill=\"none\" stroke=\"#eac68d\" strokeOpacity=\".35\" strokeWidth=\"1\"/>\n</g>\n<rect width=\"800\" height=\"760\" filter={`url(#${id}-grain)`} opacity=\".045\" pointerEvents=\"none\" data-layer=\"grain\"/>\n</svg>\n   </div>\n   <button type=\"button\" aria-pressed={paused} onClick={() => setPaused(p => !p)}\n    style={{ position: \"absolute\", bottom: 20, right: 20, padding: \"10px 18px\", border: \"1px solid #80603c\", borderRadius: 24, color: \"#ead7b8\", background: \"#211509\", cursor: \"pointer\" }}>\n    {paused ? \"Play animation\" : \"Pause animation\"}\n   </button>\n  </section>\n );\n}\n"],{type:'text/plain'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='BronzeLiquid.jsx';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+</script></html>

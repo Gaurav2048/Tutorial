@@ -1,0 +1,325 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>QueueLens · Build an AI Developer Tool</title><style>
+:root{color-scheme:light;--ink:#182b39;--muted:#536776;--accent:#00776a;--paper:#fff;--line:#dfe7ea}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:28px}body{margin:0;background:#f4f7f8;color:var(--ink);font:16px/1.75 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.top{background:#102e38;color:#e9ffff;padding:28px 6vw;display:flex;justify-content:space-between;align-items:center;gap:20px}.brand{font-size:12px;letter-spacing:.2em;font-weight:700}.tag{font-size:12px;color:#afd6cf}
+.layout{max-width:1320px;margin:auto;display:grid;grid-template-columns:260px minmax(0,1fr);gap:40px;padding:42px 30px}nav{position:sticky;top:24px;align-self:start;max-height:calc(100vh - 48px);overflow:auto;padding-right:12px}nav strong{font-size:11px;color:var(--accent);letter-spacing:.17em;text-transform:uppercase}nav a{display:block;text-decoration:none;color:var(--muted);font-size:12px;line-height:1.45;padding:9px 0;border-bottom:1px solid var(--line)}nav a:hover{color:var(--accent)}
+main{background:var(--paper);padding:46px 54px;border:1px solid var(--line);border-radius:14px;min-width:0}h1{font-size:40px;line-height:1.15;letter-spacing:-.035em;margin:0 0 22px}h2{font-size:25px;line-height:1.3;margin:54px 0 18px;padding-top:20px;border-top:1px solid var(--line);letter-spacing:-.025em}h3{font-size:18px;margin:28px 0 10px}p{margin:15px 0}a{color:var(--accent);text-underline-offset:3px}strong{font-weight:650}pre{background:#112b36;color:#e0f1f0;border-radius:9px;padding:20px 22px;overflow:auto;font-size:13px;line-height:1.65}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}p code,li code,td code{font-size:.86em;background:#edf3f4;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}table{border-collapse:collapse;width:100%;font-size:13px;margin:24px 0;display:block;overflow:auto}th,td{text-align:left;padding:12px 14px;border:1px solid var(--line);vertical-align:top}th{background:#eef5f3;color:#1d5e55;font-weight:650}ul,ol{padding-left:24px}li{margin:7px 0}.footer{font-size:12px;color:var(--muted);margin-top:35px;padding-top:18px;border-top:1px solid var(--line)}
+@media(max-width:900px){.layout{display:block;padding:20px 15px}nav{display:none}main{padding:30px 22px}h1{font-size:32px}.tag{display:none}}@media print{body{background:white}.top,nav{display:none}.layout{display:block;padding:0}main{border:0;padding:0}h1{font-size:30px}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f0f4f5;color:#182b39}h2{break-after:avoid}table{display:table}a{color:inherit}}
+</style></head><body><div class="top"><div class="brand">QUEUELENS / DEVELOPER WORKSHOP</div><div class="tag">TypeScript · MCP · Claude Skills · Practical Exercises</div></div><div class="layout"><nav aria-label="Chapters"><strong>Learning path</strong><a href="#chapter-1">1. Choose a problem with observable evidence</a><a href="#chapter-2">2. Understand the pieces you are building</a><a href="#chapter-3">3. Run the finished example first</a><a href="#chapter-4">4. Create the TypeScript project</a><a href="#chapter-5">5. Design the data contract before the tools</a><a href="#chapter-6">6. Implement plain functions first</a><a href="#chapter-7">7. Turn functions into MCP tools</a><a href="#chapter-8">8. Launch the server through stdio</a><a href="#chapter-9">9. Verify the real MCP boundary</a><a href="#chapter-10">10. Add the skill that teaches the investigation</a><a href="#chapter-11">11. Connect it to Claude Code</a><a href="#chapter-12">12. Trace one complete investigation</a><a href="#chapter-13">13. Make it installable for other developers</a><a href="#chapter-14">14. Extend it to real BullMQ data</a><a href="#chapter-15">15. Practice by adding one useful capability</a><a href="#chapter-16">16. Troubleshoot the common failures</a><a href="#chapter-17">What was tested and what you should verify locally</a></nav><main><h1>Build QueueLens: your first installable AI developer tool</h1>
+<p><strong>A practical tutorial for a React, Node.js, and TypeScript developer.</strong></p>
+<p>You will build the same category of product as REA: ordinary software exposed as tools that an AI agent can call, plus instructions that teach the agent how to use those tools. This example is deliberately small enough to understand end to end.</p>
+<p>Allow approximately 60–90 minutes to study the implementation and complete the exercises. You can run the finished demo in about ten minutes. The source accompanies this tutorial; snippets below explain specific parts rather than replacing the complete files.</p>
+<h2 id="chapter-1">1. Choose a problem with observable evidence</h2>
+<p>Your application sends invoices and emails through background jobs. A support ticket arrives: “Invoice generation is stuck.” Possible explanations include a downstream timeout, a worker losing its processing lock, or a legitimately slow job. Reading many raw records by hand is tedious, and giving an AI a generic “debug my queue” prompt does not provide those records.</p>
+<p><strong>Problem statement:</strong> Given a normalized snapshot of selected jobs and worker observations, identify suspicious jobs, explain the recorded evidence, and recommend the next investigation steps.</p>
+<p><strong>Success criteria:</strong></p>
+<ul>
+<li>Find the failed invoice that exhausted its execution attempts.</li>
+<li>Find a different invoice with recorded stalls and failed lock renewal.</li>
+<li>Flag a long-running active job without claiming that it definitely stalled.</li>
+<li>Return bounded results and disclose what the snapshot cannot establish.</li>
+<li>Let a developer use the same capabilities from a terminal or Claude Code.</li>
+</ul>
+<p>The finished product is QueueLens. Its first version uses synthetic snapshots so anyone can reproduce the scenario without Redis credentials, a running worker, or paid model access. The final chapter describes the additional work needed to connect real infrastructure.</p>
+<p>A BullMQ nuance shapes the whole design: <strong>stalled is an event, not a job state</strong>. A job can be retried or moved to the failed set after a stall. The stall limit and ordinary execution-attempt limit are separate mechanisms. See the <a href="https://docs.bullmq.io/guide/jobs/stalled">BullMQ stalled-jobs guide</a>.</p>
+<h2 id="chapter-2">2. Understand the pieces you are building</h2>
+<table>
+<thead>
+<tr>
+<th>Piece</th>
+<th>Responsibility</th>
+<th>QueueLens file</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Data boundary</td>
+<td>Validate the snapshot and its records</td>
+<td><code>src/schema.ts</code>, <code>src/store.ts</code></td>
+</tr>
+<tr>
+<td>Domain logic</td>
+<td>Produce findings from observations</td>
+<td><code>src/diagnosis.ts</code></td>
+</tr>
+<tr>
+<td>MCP server</td>
+<td>Describe tools and accept calls from an agent</td>
+<td><code>src/server.ts</code></td>
+</tr>
+<tr>
+<td>CLI</td>
+<td>Launch the server or call the same logic directly</td>
+<td><code>src/cli.ts</code></td>
+</tr>
+<tr>
+<td>Skill</td>
+<td>Explain the investigation workflow to Claude</td>
+<td><code>skills/queue-diagnosis/SKILL.md</code></td>
+</tr>
+<tr>
+<td>Plugin packaging</td>
+<td>Bundle the server and skill for local loading</td>
+<td><code>.claude-plugin/plugin.json</code>, <code>.mcp.json</code></td>
+</tr>
+</tbody></table>
+<p>Claude supplies the reasoning and conversation. Your server supplies data and deterministic operations. The skill supplies a reusable procedure. The plugin packages those parts.</p>
+<p>When you ask about invoices, Claude discovers the available tool definitions, selects a tool and arguments, receives the results, and may make another call before writing its answer. QueueLens does not embed a Claude API request in its own server. The MCP client—in this case Claude Code—owns the model interaction.</p>
+<h2 id="chapter-3">3. Run the finished example first</h2>
+<p>Unzip the project and open a terminal in the <code>queuelens</code> folder:</p>
+<pre><code class="language-sh">node --version
+npm ci
+npm test
+npm run demo
+</code></pre>
+<p>Use Node 22.19 or newer; the project was tested on Node 24.19. Dependencies are pinned, and the lockfile makes installation reproducible.</p>
+<p>The demo inspects <code>invoice-103</code>. You should see two finding codes:</p>
+<pre><code class="language-json">[&quot;stall_recorded&quot;, &quot;lock_renewal_failure&quot;]
+</code></pre>
+<p>It should not include <code>retries_exhausted</code>: that fixture has one recorded execution attempt against a limit of three. Its failure instead reports a stall-limit problem.</p>
+<p>Next, compare the other jobs:</p>
+<pre><code class="language-sh">node dist/cli.js summary --queue invoices
+node dist/cli.js inspect invoice-102 --queue invoices
+node dist/cli.js inspect invoice-104 --queue invoices
+</code></pre>
+<p>Expected observations:</p>
+<table>
+<thead>
+<tr>
+<th>Job</th>
+<th>Finding codes</th>
+<th>What you can conclude</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>invoice-102</code></td>
+<td><code>retries_exhausted</code>, <code>timeout_reported</code></td>
+<td>Its recorded timeout persisted through the configured attempts</td>
+</tr>
+<tr>
+<td><code>invoice-103</code></td>
+<td><code>stall_recorded</code>, <code>lock_renewal_failure</code></td>
+<td>Stalls and a failed lock-renewal observation were recorded</td>
+</tr>
+<tr>
+<td><code>invoice-104</code></td>
+<td><code>long_running</code></td>
+<td>Its active duration exceeds the five-minute default threshold</td>
+</tr>
+</tbody></table>
+<p>You cannot conclude that Redis disconnected or CPU usage was high: the sample has no measurements proving either explanation. The tool suggests checking those possibilities.</p>
+<h2 id="chapter-4">4. Create the TypeScript project</h2>
+<p>If you are rebuilding this from scratch, begin with an npm project and install the MCP server SDK, Zod and TypeScript. QueueLens uses the SDK&#39;s 2.x package layout:</p>
+<pre><code class="language-sh">mkdir queuelens
+cd queuelens
+npm init -y
+npm install @modelcontextprotocol/server@2.3.1 zod@4.4.3
+npm install -D typescript@5.9.3 @types/node@24.10.0
+</code></pre>
+<p>Set <code>&quot;type&quot;: &quot;module&quot;</code> in <code>package.json</code>. The supplied <code>tsconfig.json</code> uses <code>NodeNext</code> for both module settings, <code>src</code> as the source root, and <code>dist</code> as the compiled destination. Relative TypeScript imports use <code>.js</code> so the emitted JavaScript works with Node&#39;s ESM resolver.</p>
+<p>The official <a href="https://modelcontextprotocol.io/docs/develop/build-server">MCP server tutorial</a> documents the SDK. Older examples may use <code>@modelcontextprotocol/sdk/server/mcp.js</code>; this project consistently uses the newer split package, <code>@modelcontextprotocol/server</code>. Do not mix import paths from different SDK generations.</p>
+<p>Build with <code>npm run build</code>. Inspect the short files before expanding the project: the goal is to understand the boundaries, not to begin with a large framework.</p>
+<h2 id="chapter-5">5. Design the data contract before the tools</h2>
+<p>Open <code>fixtures/demo.json</code>. It contains a capture time, a reporting-window label, a scope description, and selected records for two queues.</p>
+<p>Each job has:</p>
+<ul>
+<li>Identity: queue name, job ID, job name.</li>
+<li>Current observed state: waiting, active, completed, failed or delayed.</li>
+<li>Timing: creation, processing and finishing timestamps when available.</li>
+<li>Attempts and an optional recorded failure message.</li>
+<li>Selected events with their observation timestamps.</li>
+</ul>
+<p>QueueLens uses the pair <code>(queue, id)</code> as identity. Two queues may legitimately contain the same job ID.</p>
+<p>This is <strong>QueueLens&#39;s normalized format</strong>, not a raw BullMQ export. An adapter must deliberately map its source data into this contract. In particular, <code>lock_renewal_failed</code> is a normalized worker observation, not a promise that BullMQ exposes an identically named global queue event.</p>
+<p>Open <code>src/schema.ts</code>. Zod validates input before analysis. The schema rejects unknown fields, excessive record counts, duplicate identities, impossible timestamp ordering and observations after the capture time. <code>store.ts</code> also rejects input files larger than 5 MiB.</p>
+<p>The server reloads the configured file for every call. That keeps the adapter simple and allows a snapshot to be replaced between calls. It also means an investigation can span more than one capture; the returned capture timestamp lets the agent notice that change.</p>
+<p>For a coherent production investigation, introduce an immutable snapshot ID or retain a snapshot across the investigation. That is an extension, not behavior implemented here.</p>
+<h2 id="chapter-6">6. Implement plain functions first</h2>
+<p>Read <code>src/diagnosis.ts</code> before the MCP wrapper. You will find three ordinary functions:</p>
+<pre><code class="language-ts">summarize(snapshot, queue)
+listProblems(snapshot, queue, limit, longRunningMs)
+inspectJob(snapshot, queue, jobId, longRunningMs)
+</code></pre>
+<p>They do not need a model, an HTTP server, or Claude. This makes the core useful and testable on its own.</p>
+<p>Consider the long-running check:</p>
+<pre><code class="language-ts">const age = Date.parse(snapshot.capturedAt)
+  - Date.parse(job.processedAt);
+
+if (age &gt; longRunningMs) {
+  // Return an observation and suggested next checks.
+}
+</code></pre>
+<p>Notice that it uses the snapshot&#39;s capture time instead of <code>Date.now()</code>. Running the same historical fixture tomorrow should not change a twelve-minute job into a day-long job.</p>
+<p>A finding contains a stable code, an observation, evidence and next checks. For example, <code>timeout_reported</code> points to the recorded failure message. It does not claim that the downstream service was definitely overloaded. This distinction makes the result more useful than a confident but unsupported diagnosis.</p>
+<p><code>listProblems</code> returns <code>matchingJobs</code>, a bounded list and a <code>truncated</code> flag. Without these fields, an agent could mistake the first ten records for the entire result set.</p>
+<p>The example includes a small common-pattern redactor for token and email strings. It is not a complete secret-detection system. Before connecting actual logs, define a field allowlist and sanitize data at ingestion. Error strings can contain information beyond these patterns.</p>
+<h2 id="chapter-7">7. Turn functions into MCP tools</h2>
+<p>Read <code>src/server.ts</code>. The server&#39;s tool catalog is a public interface, much like a REST API. A tool needs a useful name, a description, an input schema and a handler.</p>
+<p>This excerpt is from the actual implementation:</p>
+<pre><code class="language-ts">server.registerTool(&#39;get_queue_summary&#39;, {
+  description: &#39;Count job states and recorded stalls in a configured snapshot. Counts are observations, not guaranteed live queue totals.&#39;,
+  inputSchema: z.object({ queue: queueName.optional() }),
+  annotations,
+}, ({ queue }) =&gt; run(s =&gt; summarize(s, queue)));
+</code></pre>
+<p>The name helps the agent identify the operation. The description explains when to use it and what its output means. The schema defines valid arguments. The handler calls your existing function.</p>
+<p><code>run()</code> loads a validated snapshot and wraps the output. Successful calls provide both JSON text and <code>structuredContent</code>. Error calls return <code>isError: true</code>. A missing job is distinguished from unusable input data without exposing raw validation details or file contents.</p>
+<p>The three tools are:</p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Arguments</th>
+<th>Why it exists</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>get_queue_summary</code></td>
+<td>Optional queue</td>
+<td>Discover queues and obtain observed counts</td>
+</tr>
+<tr>
+<td><code>list_problem_jobs</code></td>
+<td>Optional queue, bounded limit, duration threshold</td>
+<td>Narrow a large snapshot to relevant records</td>
+</tr>
+<tr>
+<td><code>inspect_job</code></td>
+<td>Queue, job ID, duration threshold</td>
+<td>Get evidence and next checks for one record</td>
+</tr>
+</tbody></table>
+<p>The snapshot path is configuration for the server process. It is not an arbitrary path supplied by the model in each tool call. Tool input schemas are part of your product design: expose the operation the user needs.</p>
+<p>Annotations mark the tools as read-only. These annotations are hints to clients, not permission enforcement. The implementation is read-only because its handlers only load and inspect the snapshot.</p>
+<h2 id="chapter-8">8. Launch the server through stdio</h2>
+<p>In <code>src/cli.ts</code>, the <code>serve</code> command starts the protocol process:</p>
+<pre><code class="language-ts">serveStdio(() =&gt; createServer(snapshotPath), {
+  onerror: error =&gt; console.error(&#39;QueueLens protocol error:&#39;, error.message),
+});
+</code></pre>
+<p>The factory returns a fresh server instance as required by the SDK&#39;s protocol negotiation. The supplied integration tests exercise both modern and legacy clients.</p>
+<p>For a stdio server, stdout carries protocol messages. Sending a friendly <code>console.log(&#39;Server ready&#39;)</code> there can corrupt communication. Send operational logs to stderr using <code>console.error</code> instead. The CLI&#39;s non-server commands are different: they intentionally print JSON to stdout.</p>
+<p>Running <code>npm start</code> in a terminal starts a process waiting for an MCP client. Silence is expected. It is not a web server, and there is no browser page or TCP port for this transport.</p>
+<h2 id="chapter-9">9. Verify the real MCP boundary</h2>
+<p>Run:</p>
+<pre><code class="language-sh">npm test
+</code></pre>
+<p>The project has eight tests. <code>tests/diagnosis.test.mjs</code> verifies the domain rules, redaction, bounded output, snapshot validation and CLI behavior. <code>tests/mcp.test.mjs</code> spawns the compiled server, connects an SDK client over stdio, discovers the tools and calls all three of them.</p>
+<p>The protocol test also sends invalid arguments, checks missing-job errors and confirms that the fixture bytes did not change. It runs once with a legacy handshake and once with a modern pinned protocol revision.</p>
+<p>This matters because a passing function test does not prove your executable starts, its import paths resolve, or the tool contract works across the process boundary.</p>
+<p>The automated test client is a useful development tool. It exercises your server without paying for a model request or relying on an agent to select the right tool. Testing model behavior itself requires a separate set of agent evaluations.</p>
+<h2 id="chapter-10">10. Add the skill that teaches the investigation</h2>
+<p>Open <code>skills/queue-diagnosis/SKILL.md</code>.</p>
+<p>The frontmatter names the skill and explains its purpose. <code>disable-model-invocation: true</code> makes this tutorial&#39;s workflow explicitly invoked by the user. <code>$ARGUMENTS</code> receives the queue or job description after the command.</p>
+<p>The workflow starts with a summary, narrows to problem jobs and then inspects individual records. It requires evidence, capture times and uncertainty in the final answer. It also prevents the agent from treating error messages as instructions or claiming to have inspected live Redis.</p>
+<p>A skill changes the procedure the model follows. The MCP server supplies the operations and data that make that procedure possible. You can change the skill&#39;s reporting format without changing the server, or reuse the server in another MCP client with different instructions.</p>
+<p>For project installation, the skill goes in <code>.claude/skills/queue-diagnosis/SKILL.md</code>. For plugin loading, it stays in the plugin&#39;s <code>skills/</code> directory and receives a plugin-qualified command. See <a href="https://code.claude.com/docs/en/skills">Claude Code skills</a>.</p>
+<h2 id="chapter-11">11. Connect it to Claude Code</h2>
+<p>Choose one of the following development paths.</p>
+<h3>Path A: load the local plugin</h3>
+<p>Build first, then start Claude Code with an absolute path:</p>
+<pre><code class="language-sh">npm ci
+npm run build
+claude --plugin-dir /absolute/path/to/queuelens
+</code></pre>
+<p>This loads the plugin manifest, skill and MCP configuration. Inside the session:</p>
+<pre><code class="language-text">/mcp
+/queuelens:queue-diagnosis invoices
+</code></pre>
+<p>The <code>.mcp.json</code> file uses <code>${CLAUDE_PLUGIN_ROOT}</code> to locate the compiled executable. The standard plugin layout and path variables are documented in the <a href="https://code.claude.com/docs/en/plugins-reference">plugin manifest reference</a>.</p>
+<h3>Path B: install into an existing project</h3>
+<p>From the QueueLens folder, preview setup:</p>
+<pre><code class="language-sh">npm run setup:claude -- --project /absolute/path/to/your-app
+</code></pre>
+<p>The command prints the registration arguments and destination skill directory. It does not apply changes without <code>--apply</code>:</p>
+<pre><code class="language-sh">npm run setup:claude -- --project /absolute/path/to/your-app --apply
+</code></pre>
+<p>The setup command runs the installed Claude CLI in the target project and copies the skill. It refuses to overwrite an existing skill. It uses argument arrays rather than building a shell command string, so paths with spaces remain single arguments.</p>
+<p>Restart Claude Code in your target project, inspect <code>/mcp</code>, and invoke:</p>
+<pre><code class="language-text">/queue-diagnosis invoices
+</code></pre>
+<p>The command is unqualified here because this is a project skill rather than a plugin skill. Choose one path to avoid loading duplicate tools and skills.</p>
+<p>For manual MCP registration, the equivalent shape is:</p>
+<pre><code class="language-sh">claude mcp add --transport stdio --scope local queuelens \
+  -- node /absolute/path/to/queuelens/dist/cli.js serve
+</code></pre>
+<p>You would separately copy the skill into the target project&#39;s <code>.claude/skills/</code> directory. The setup command automates those two steps. Claude Code&#39;s documentation explains <a href="https://code.claude.com/docs/en/mcp">MCP registration and scopes</a>.</p>
+<p><strong>Verification prompt:</strong> “Use QueueLens to investigate the invoices queue. Show observed evidence separately from possible causes.”</p>
+<p>An appropriate response identifies the two failed jobs and the long-running active job, names the capture time, and discloses that the input is synthetic. Its exact prose will vary. You should see actual tool calls; a convincing answer alone is not proof that the integration ran.</p>
+<h2 id="chapter-12">12. Trace one complete investigation</h2>
+<p>The prompt names the invoices queue. The skill guides Claude to call <code>get_queue_summary</code> with <code>queue: &quot;invoices&quot;</code>.</p>
+<p>The summary reports five observed jobs: one waiting, one active, one completed and two failed. These are snapshot counts, not a complete live-queue claim.</p>
+<p>Claude then calls <code>list_problem_jobs</code>. It receives three matches for invoices: <code>invoice-102</code>, <code>invoice-103</code> and <code>invoice-104</code>.</p>
+<p>It can inspect each result. For <code>invoice-103</code>, the evidence includes failed lock renewal at 17:43:31Z and stalled events at 17:44:01Z and 17:45:01Z. Those timestamps suggest when to examine worker and Redis observations, but they do not prove the cause.</p>
+<p>This is the reusable product pattern: gather reliable evidence through software, organize the investigation through instructions, and let the model synthesize the findings.</p>
+<h2 id="chapter-13">13. Make it installable for other developers</h2>
+<p>The included CLI has a shebang, a <code>bin</code> entry in <code>package.json</code>, and a setup command. These are the building blocks behind commands such as <code>npx some-package setup</code>.</p>
+<p>Before publishing your own version:</p>
+<ol>
+<li>Choose an available npm package name and update the manifest.</li>
+<li>Remove <code>&quot;private&quot;: true</code> only when you intend to publish.</li>
+<li>Add a license and clear support information.</li>
+<li>Add a <code>prepack</code> build step so the executable exists in the tarball.</li>
+<li>Run tests, inspect <code>npm pack --dry-run</code>, and test a packed installation in a clean directory.</li>
+<li>Publish to npm and put the source in a GitHub repository.</li>
+</ol>
+<p>This tutorial has not published anything. The package name is an example, not a claim that it is available.</p>
+<p>After you publish an executable package, a user&#39;s installation command could look like:</p>
+<pre><code class="language-sh">npx YOUR_PUBLISHED_PACKAGE setup --project /path/to/app --apply
+</code></pre>
+<p>Keep setup deliberate and visible. Avoid an automatic postinstall script that edits agent configuration unexpectedly.</p>
+<p>For Claude&#39;s marketplace distribution, add a marketplace catalog or publish through an existing one. A plugin manifest describes the plugin; a marketplace catalog lists where plugins are obtained. Build and dependency availability must be handled before declaring a marketplace release usable. The included configuration demonstrates local loading after <code>npm ci</code> and <code>npm run build</code>.</p>
+<h2 id="chapter-14">14. Extend it to real BullMQ data</h2>
+<p>The current product analyzes normalized snapshots. Connecting Redis is a separate adapter project, and it requires more than replacing a JSON read with one API call.</p>
+<p>A collector would gather selected jobs and their current states from a Queue, retain lifecycle observations from QueueEvents, and correlate worker logs. BullMQ&#39;s <a href="https://docs.bullmq.io/guide/jobs/getters">job getters</a> and <a href="https://docs.bullmq.io/guide/events">events guide</a> are useful starting points.</p>
+<p>Define the queue allowlist, the retention window and the maximum number of records. Preserve which observations came from the queue, the worker or your own monitoring. Do not fabricate event history from current job state.</p>
+<p>The QueueLens adapter boundary is <code>loadSnapshot()</code>. One option is to build a collector that writes this exact JSON schema atomically. Then your MCP server and skill can remain unchanged. Another is to introduce a store interface backed by a monitoring API, returning the same normalized contract.</p>
+<p>For atomic file replacement, write the complete new snapshot to a temporary file and rename it into place. This avoids a tool reading half-written JSON. The current loader returns an error for malformed input rather than continuing with partial data.</p>
+<p>A useful second release would add queue pause/rate-limit observations, downstream timings and event-loop-delay measurements. These observations allow better explanations. Retrying jobs or changing workers would require separately designed mutation tools, explicit user intent and idempotency handling; the current tools perform no such operations.</p>
+<h2 id="chapter-15">15. Practice by adding one useful capability</h2>
+<p><strong>Exercise A: make the duration threshold visible.</strong> Invoke <code>inspect_job</code> for <code>invoice-104</code> with <code>longRunningMs: 900000</code>. Its twelve-minute duration no longer exceeds the threshold. Explain why a threshold is not itself a diagnosis.</p>
+<p><strong>Exercise B: add <code>get_failure_groups</code>.</strong> Group failed records by a stable classification such as timeout or authentication failure. Return counts, representative job identities and scope metadata. Avoid grouping by the entire raw message, which can contain unique IDs or sensitive strings. Test the plain function and a real MCP call.</p>
+<p><strong>Exercise C: test an overlapping job ID.</strong> Add an <code>invoice-103</code> record to the emails queue. Confirm that <code>inspect_job</code> uses the requested queue and does not accidentally inspect the invoice record.</p>
+<p><strong>Exercise D: change the report, not the tools.</strong> Modify the skill to produce an incident note with observed facts, candidate causes and missing measurements. Observe which changes belong in the skill versus the server.</p>
+<p><strong>Exercise E: collect agent evaluations.</strong> Prepare several representative prompts, including a healthy queue, a timeout, a stall-limit failure and an ambiguous long-running job. Record whether Claude selects the right tools and keeps uncertainty in its answer. Automated protocol tests establish connectivity; these evaluations assess the whole workflow.</p>
+<h2 id="chapter-16">16. Troubleshoot the common failures</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Likely check</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>MCP process fails immediately</td>
+<td>Build first; check Node version and the configured absolute path</td>
+</tr>
+<tr>
+<td>Tool registration exists but tools are unavailable</td>
+<td>Inspect <code>/mcp</code> and the process error; registration is not the same as a connected server</td>
+</tr>
+<tr>
+<td>Protocol errors appear after a startup message</td>
+<td>Remove server <code>console.log</code> calls; stdout belongs to MCP</td>
+</tr>
+<tr>
+<td>Skill command is missing</td>
+<td>Check project versus plugin installation and the corresponding command name</td>
+</tr>
+<tr>
+<td>Setup refuses to overwrite the skill</td>
+<td>Review the existing skill before updating it; manual replacement is deliberate</td>
+</tr>
+<tr>
+<td>A live job is not found</td>
+<td>The configured snapshot may be synthetic, sampled or old</td>
+</tr>
+<tr>
+<td>The model confidently claims a Redis outage</td>
+<td>Require measured evidence and correct the skill/evaluation; a stall alone does not prove that claim</td>
+</tr>
+</tbody></table>
+<h2 id="chapter-17">What was tested and what you should verify locally</h2>
+<p>The shipped project compiles and passes eight automated tests, including real MCP subprocess calls with two protocol handshakes. No model API key is needed for those checks.</p>
+<p>The actual Claude Code UI, <code>claude mcp add</code> execution, plugin loading and Redis integration were not exercised in the build environment. Verify the Claude integration with <code>/mcp</code> and visible tool calls on your computer. Redis integration is an extension chapter, not a shipped feature.</p>
+<p>Your first milestone is to run the demo, inspect the domain logic, connect Claude, and complete Exercise B. That gives you practical experience with the pieces behind an installable repository: implementation, tool contracts, workflow instructions, testing, setup and distribution.</p>
+<div class="footer">Companion source, tests, fixture and skill are included in the same project. This tutorial works offline; documentation links require internet access.</div></main></div></body></html>
