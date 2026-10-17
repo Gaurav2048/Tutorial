@@ -1,0 +1,1077 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Build an Agent Harness: Basic to Advanced</title>
+<style>
+  :root{
+    --bg:#fbfaf8; --panel:#ffffff; --text:#24211e; --muted:#6c665e; --line:#e8e3da;
+    --accent:#c4562b; --accent-soft:#fbeee8; --code-bg:#17181c; --code-text:#e6e6e6;
+    --c:#7f8a99; --s:#9ccf8c; --k:#e08a6b; --n:#e5c07b;
+    --lv1:#2f8f5b; --lv2:#2b6cb0; --lv3:#b7791f; --lv4:#8e44ad; --lv5:#c4562b;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#141412; --panel:#1b1b18; --text:#ece8e1; --muted:#9c968c; --line:#2d2b27;
+      --accent:#ee8a60; --accent-soft:#2a1d17; --code-bg:#0e0f11; }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+  a{color:var(--accent)}
+  .layout{display:grid;grid-template-columns:290px minmax(0,1fr);min-height:100vh}
+  nav{position:sticky;top:0;height:100vh;overflow:auto;padding:28px 20px;border-right:1px solid var(--line);background:var(--panel)}
+  nav h2{font-size:15px;margin:0 0 4px}
+  nav .sub{font-size:12px;color:var(--muted);margin-bottom:18px}
+  nav .lvl{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;font-weight:700;margin:18px 0 6px}
+  nav a{display:flex;gap:8px;align-items:baseline;padding:5px 8px;margin:1px -8px;border-radius:6px;text-decoration:none;color:var(--muted);font-size:14px;line-height:1.35}
+  nav a:hover{background:var(--accent-soft);color:var(--text)}
+  nav a.active{background:var(--accent-soft);color:var(--text);font-weight:600}
+  nav a .num{font-variant-numeric:tabular-nums;opacity:.6;min-width:20px}
+  nav a.done .num::after{content:"✓";color:var(--lv1);margin-left:2px}
+  main{padding:56px 48px 120px;max-width:860px}
+  .hero h1{font-size:40px;line-height:1.15;margin:0 0 14px;letter-spacing:-.5px}
+  .hero p.lead{font-size:19px;color:var(--muted);margin:0 0 28px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:34px}
+  .chip{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:3px 11px;color:var(--muted);background:var(--panel)}
+  h2.level{margin:80px 0 6px;font-size:13px;letter-spacing:1.6px;text-transform:uppercase;font-weight:800}
+  .level-title{font-size:30px;line-height:1.2;margin:0 0 6px;letter-spacing:-.3px}
+  .level-desc{color:var(--muted);margin:0 0 10px}
+  section.step{margin-top:48px;padding-top:12px;scroll-margin-top:12px}
+  section.step h3{font-size:22px;margin:0 0 4px;display:flex;gap:12px;align-items:baseline}
+  section.step h3 .badge{font-size:12px;font-weight:700;color:#fff;border-radius:6px;padding:2px 8px;white-space:nowrap}
+  .goal{color:var(--muted);margin:2px 0 14px;font-size:15px}
+  .goal b{color:var(--text)}
+  p{margin:12px 0}
+  code{font:13.5px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--accent-soft);padding:1px 6px;border-radius:5px}
+  figure.code{margin:16px 0;border-radius:12px;overflow:hidden;background:var(--code-bg);border:1px solid #00000020}
+  figure.code figcaption{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;font:12px ui-monospace,Menlo,monospace;color:#9aa0a6;border-bottom:1px solid #ffffff14}
+  figure.code button{background:#ffffff14;color:#cfd3d7;border:0;border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer}
+  figure.code button:hover{background:#ffffff26}
+  figure.code pre{margin:0;padding:16px 18px;overflow:auto;color:var(--code-text);font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;tab-size:2}
+  .c{color:var(--c);font-style:italic}.s{color:var(--s)}.k{color:var(--k)}.n{color:var(--n)}
+  .box{border-radius:10px;padding:14px 18px;margin:18px 0;border:1px solid var(--line);background:var(--panel);font-size:15px}
+  .box b.t{display:block;font-size:12px;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px}
+  .box.tip{border-left:4px solid var(--lv1)} .box.tip b.t{color:var(--lv1)}
+  .box.warn{border-left:4px solid var(--lv3)} .box.warn b.t{color:var(--lv3)}
+  .box.try{border-left:4px solid var(--lv2)} .box.try b.t{color:var(--lv2)}
+  ul.tight{margin:8px 0;padding-left:22px} ul.tight li{margin:4px 0}
+  .done-btn{margin-top:14px;font-size:13px;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:8px;padding:6px 14px;cursor:pointer}
+  .done-btn:hover{border-color:var(--accent)}
+  /* diagram */
+  .diagram{margin:24px 0;border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:22px}
+  .flow{display:grid;grid-template-columns:1fr 54px 1fr 54px 1fr;align-items:center;gap:0}
+  .node{border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;text-align:center;font-size:14px;background:var(--bg)}
+  .node b{display:block;font-size:15px}
+  .node small{color:var(--muted)}
+  .node.hl{border-color:var(--accent);background:var(--accent-soft)}
+  .arrow{text-align:center;color:var(--muted);font-size:20px}
+  .loopnote{text-align:center;color:var(--muted);font-size:13px;margin-top:12px}
+  table{border-collapse:collapse;width:100%;font-size:14.5px;margin:16px 0}
+  th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:12px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
+  footer{margin-top:90px;padding-top:24px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+  .progress{position:fixed;left:0;top:0;height:3px;background:var(--accent);width:0;z-index:10}
+  @media (max-width:960px){
+    .layout{grid-template-columns:1fr}
+    nav{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}
+    main{padding:32px 18px 80px}
+    .hero h1{font-size:30px}
+    .flow{grid-template-columns:1fr;gap:6px}
+    .arrow{transform:rotate(90deg)}
+  }
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="layout">
+<nav id="nav" aria-label="Tutorial contents"></nav>
+<main>
+
+<div class="hero">
+  <h1>Build an Agent Harness<br>from scratch</h1>
+  <p class="lead">A hands-on, 18-step tutorial. You start with a single API call and finish with a harness that has tools, permissions, streaming, sessions, context compaction, subagents, hooks and evals.</p>
+  <div class="chips">
+    <span class="chip">TypeScript / Node 20+</span>
+    <span class="chip">Anthropic Messages API</span>
+    <span class="chip">~3–5 hours end to end</span>
+    <span class="chip">Concepts carry to any language</span>
+  </div>
+</div>
+
+<h2 class="level" style="color:var(--lv1);margin-top:20px" id="intro">Before you start</h2>
+<h3 class="level-title">What is an agent harness?</h3>
+<p>An <b>agent</b> is a language model that can decide to take actions, see what happened, and decide again. The <b>harness</b> is everything around the model that makes that possible and safe: the loop, the tools, the permissions, the context, the persistence. The model supplies judgment; the harness supplies hands, eyes, memory and guardrails.</p>
+
+<div class="diagram">
+  <div class="flow">
+    <div class="node hl"><b>Model</b><small>decides what to do next</small></div>
+    <div class="arrow">⇄</div>
+    <div class="node hl"><b>Harness loop</b><small>runs until the task is done</small></div>
+    <div class="arrow">⇄</div>
+    <div class="node hl"><b>Tools</b><small>files, shell, web, APIs</small></div>
+  </div>
+  <div class="flow" style="margin-top:14px">
+    <div class="node"><b>Context</b><small>prompt, history, compaction</small></div>
+    <div class="arrow"></div>
+    <div class="node"><b>Safety</b><small>permissions, limits, sandbox</small></div>
+    <div class="arrow"></div>
+    <div class="node"><b>State</b><small>sessions, logs, evals</small></div>
+  </div>
+  <div class="loopnote">Top row = the core loop. Bottom row = what turns a demo into a product.</div>
+</div>
+
+<p><b>Prerequisites:</b> Node 20+, an Anthropic API key, comfort with TypeScript and async/await. Every code sample builds on the previous one, so follow in order. Models change quickly, so the model name is kept in one constant you can swap, and the API shapes shown (messages, <code>tool_use</code>, <code>tool_result</code>) are the stable core.</p>
+
+<div class="box tip"><b class="t">How to use this page</b>Type the code instead of pasting it, at least for Steps 1–9. The loop is small enough to hold in your head, and that understanding is what makes the advanced steps feel obvious. Use "Mark step done" to track progress (saved in your browser).</div>
+
+<!-- ============ LEVEL 1 ============ -->
+<h2 class="level" style="color:var(--lv1)" id="lvl1">Level 1</h2>
+<h3 class="level-title">Foundations: the loop</h3>
+<p class="level-desc">Goal: a model that can call one fake tool in a loop.</p>
+
+<section class="step" id="s1" data-title="Setup and first call" data-level="1">
+  <h3><span class="badge" style="background:var(--lv1)">STEP 1</span> Setup and your first call</h3>
+  <div class="goal"><b>Goal:</b> project skeleton, one successful request to the model.</div>
+<script type="text/plain" class="code" data-lang="bash" data-file="terminal">
+mkdir agent-harness && cd agent-harness
+npm init -y
+npm i @anthropic-ai/sdk
+npm i -D typescript tsx @types/node
+npx tsc --init --target es2022 --module nodenext --moduleResolution nodenext --strict
+export ANTHROPIC_API_KEY="sk-ant-..."   # never commit this
+</script>
+<script type="text/plain" class="code" data-lang="ts" data-file="src/hello.ts">
+import Anthropic from "@anthropic-ai/sdk";
+
+export const MODEL = "claude-sonnet-5-5"; // one constant, easy to swap
+const client = new Anthropic();           // reads ANTHROPIC_API_KEY
+
+const res = await client.messages.create({
+  model: MODEL,
+  max_tokens: 1024,
+  messages: [{ role: "user", content: "In one sentence, what is an agent harness?" }],
+});
+
+console.log(res.stop_reason);  // "end_turn"
+console.log(res.content);      // [{ type: "text", text: "..." }]
+</script>
+  <p>Run it with <code>npx tsx src/hello.ts</code>. Notice two things: <code>content</code> is an <b>array of blocks</b> (not a string), and there is a <code>stop_reason</code>. Both matter for everything that follows.</p>
+  <p>Also remember that the API is <b>stateless</b>. The model remembers nothing between calls. Whatever it needs to know, you send again each time. A big part of a harness's job is deciding <i>what to send</i>.</p>
+  <button class="done-btn">Mark step done</button>
+</section>
+
+<section class="step" id="s2" data-title="Anatomy of tool use" data-level="1">
+  <h3><span class="badge" style="background:var(--lv1)">STEP 2</span> Anatomy of tool use</h3>
+  <div class="goal"><b>Goal:</b> understand the exact message protocol the loop depends on.</div>
+  <p>A tool is described to the model with a name, a description and a JSON Schema. The model never runs anything. It only <i>asks</i> you to, by returning a <code>tool_use</code> block. You run it and reply with a <code>tool_result</code> block whose <code>tool_use_id</code> matches.</p>
+<script type="text/plain" class="code" data-lang="ts" data-file="src/tool-protocol.ts">
+import Anthropic from "@anthropic-ai/sdk";
+import { MODEL } from "./hello.js";
+
+const client = new Anthropic();
+
+const tools: Anthropic.Tool[] = [{
+  name: "get_time",
+  description: "Returns the current time as an ISO string. Use when the user asks about the time.",
+  input_schema: { type: "object", properties: {}, required: [] },
+}];
+
+const first = await client.messages.create({
+  model: MODEL, max_tokens: 1024, tools,
+  messages: [{ role: "user", content: "What time is it?" }],
+});
+// first.stop_reason === "tool_use"
+// first.content = [ {type:"text",...}, {type:"tool_use", id:"toolu_...", name:"get_time", input:{}} ]
+
+const call = first.content.find((b): b is Anthropic.ToolUseBlock => b.type === "tool_use")!;
+
+const second = await client.messages.create({
+  model: MODEL, max_tokens: 1024, tools,
+  messages: [
+    { role: "user", content: "What time is it?" },
+    { role: "assistant", content: first.content },          // echo the assistant turn back
+    { role: "user", content: [                               // results go in a USER message
+      { type: "tool_result", tool_use_id: call.id, content: new Date().toISOString() },
+    ]},
+  ],
+});
+console.log(second.content); // final natural-language answer
+</script>
+  <div class="box warn"><b class="t">Rules that cause 90% of early bugs</b>
+    <ul class="tight">
+      <li>Every <code>tool_use</code> must be answered by a <code>tool_result</code> with the same id, in the very next user message.</li>
+      <li>If the model made several tool calls in one turn, return <b>all</b> results together in one user message.</li>
+      <li>Always push the assistant's <code>content</code> back unchanged, not just its text.</li>
+    </ul>
+  </div>
+  <button class="done-btn">Mark step done</button>
+</section>
+
+<section class="step" id="s3" data-title="The agent loop" data-level="1">
+  <h3><span class="badge" style="background:var(--lv1)">STEP 3</span> The agent loop</h3>
+  <div class="goal"><b>Goal:</b> the ~25 lines that are the heart of every agent.</div>
+  <p>Call the model. If it asks for tools, run them, append the results, repeat. If it doesn't, you're done. That's the entire idea.</p>
+<script type="text/plain" class="code" data-lang="ts" data-file="src/agent.ts">
+import Anthropic from "@anthropic-ai/sdk";
+import { MODEL } from "./hello.js";
+
+const client = new Anthropic();
+const MAX_TURNS = 20;
+
+type ToolFn = (input: any) => Promise<string>;
+
+export async function runAgent(
+  task: string,
+  tools: Anthropic.Tool[],
+  impl: Record<string, ToolFn>,
+): Promise<string> {
+  const messages: Anthropic.MessageParam[] = [{ role: "user", content: task }];
+
+  for (let turn = 0; turn < MAX_TURNS; turn++) {
+    const res = await client.messages.create({
+      model: MODEL, max_tokens: 4096, tools, messages,
+    });
+    messages.push({ role: "assistant", content: res.content });
+
+    if (res.stop_reason !== "tool_use") {
+      // done: return the final text
+      return res.content
+        .filter((b): b is Anthropic.TextBlock => b.type === "text")
+        .map((b) => b.text).join("\n");
+    }
+
+    const results: Anthropic.ToolResultBlockParam[] = [];
+    for (const block of res.content) {
+      if (block.type !== "tool_use") continue;
+      const out = await impl[block.name](block.input);
+      results.push({ type: "tool_result", tool_use_id: block.id, content: out });
+    }
+    messages.push({ role: "user", content: results });
+  }
+  return "Stopped: reached the turn limit.";
+}
+</script>
+<script type="text/plain" class="code" data-lang="ts" data-file="src/try-loop.ts">
+import { runAgent } from "./agent.js";
+
+const answer = await runAgent(
+  "What time is it, and how many hours until midnight UTC?",
+  [{ name: "get_time", description: "Current time (ISO, UTC).",
+     input_schema: { type: "object", properties: {}, required: [] } }],
+  { get_time: async () => new Date().toISOString() },
+);
+console.log(answer);
+</script>
+  <div class="box try"><b class="t">Try it</b>Add a second tool, <code>add(a, b)</code>, and ask a question that needs both. Watch the model chain calls across turns.</div>
+  <p>This is already a real agent. Everything below makes it <b>useful</b> (better tools), <b>safe</b> (control), <b>pleasant</b> (UX), and <b>durable</b> (long tasks).</p>
+  <button class="done-btn">Mark step done</button>
+</section>
+
+<!-- ============ LEVEL 2 ============ -->
+<h2 class="level" style="color:var(--lv2)" id="lvl2">Level 2</h2>
+<h3 class="level-title">Real tools</h3>
+<p class="level-desc">Goal: a tool registry with file and shell tools that fail gracefully.</p>
+
+<section class="step" id="s4" data-title="A tool registry" data-level="2">
+  <h3><span class="badge" style="background:var(--lv2)">STEP 4</span> A tool registry</h3>
+  <div class="goal"><b>Goal:</b> keep each tool's schema and implementation together; make adding tools trivial.</div>
+<script type="text/plain" class="code" data-lang="ts" data-file="src/tools/types.ts">
+import type Anthropic from "@anthropic-ai/sdk";
+
+export interface Ctx {
+  root: string;                                  // workspace directory the agent may touch
+  approve(message: string): Promise<boolean>;    // ask the human (Step 8)
+}
+
+export interface Tool {
+  schema: Anthropic.Tool;
+  readOnly: boolean;                             // safe to run in parallel / auto-approve
+  run(input: any, ctx: Ctx): Promise<string>;
+}
+
+export const truncate = (s: string, max = 20_000) =>
+  s.length <= max ? s : s.slice(0, max) + `\n…[truncated ${s.length - max} chars]`;
+</script>
+<script type="text/plain" class="code" data-lang="ts" data-file="src/tools/registry.ts">
+import type Anthropic from "@anthropic-ai/sdk";
+import type { Ctx, Tool } from "./types.js";
+
+export class Registry {
+  private tools = new Map<string, Tool>();
+  constructor(list: Tool[]) { list.forEach((t) => this.tools.set(t.schema.name, t)); }
+
+  schemas(): Anthropic.Tool[] { return [...this.tools.values()].map((t) => t.schema); }
+  get(name: string) { return this.tools.get(name); }
+  subset(names: string[]) { return new Registry(names.map((n) => this.tools.get(n)!).filter(Boolean)); }
+
+  async execute(block: Anthropic.ToolUseBlock, ctx: Ctx): Promise<Anthropic.ToolResultBlockParam> {
+    const tool = this.tools.get(block.name);
+    if (!tool) return err(block.id, `Unknown tool "${block.name}". Available: ${[...this.tools.keys()].join(", ")}`);
+    try {
+      return { type: "tool_result", tool_use_id: block.id, content: await tool.run(block.input, ctx) };
+    } catch (e) {
+      return err(block.id, `Error: ${(e as Error).message}`);   // feed errors BACK to the model
+    }
+  }
+}
+
+const err = (id: string, msg: string): Anthropic.ToolResultBlockParam =>
+  ({ type: "tool_result", tool_use_id: id, is_error: true, content: msg });
+</script>
+  <div class="box tip"><b class="t">Key idea</b>Never let a tool exception crash the loop. Catch it and return it as an <code>is_error</code> result. Models are good at reading an error and trying something else; that's how they self-correct.</div>
+  <button class="done-btn">Mark step done</button>
+</section>
+
+<section class="step" id="s5" data-title="File and shell tools" data-level="2">
+  <h3><span class="badge" style="background:var(--lv2)">STEP 5</span> File and shell tools</h3>
+  <div class="goal"><b>Goal:</b> the minimum toolset for a coding-style agent: read, write, list, run.</div>
+<script type="text/plain" class="code" data-lang="ts" data-file="src/tools/files.ts">
+import fs from "node:fs/promises";
+import path from "node:path";
+import { truncate, type Tool } from "./types.js";
+
+// Confine every path to the workspace. Never trust model-supplied paths.
+export function safePath(root: string, p: string) {
+  const abs = path.resolve(root, p);
+  if (abs !== root && !abs.startsWith(root + path.sep)) throw new Error(`Path escapes workspace: ${p}`);
+  return abs;
+}
+
+export const readFile: Tool = {
+  readOnly: true,
+  schema: {
+    name: "read_file",
+    description: "Read a UTF-8 text file. Paths are relative to the workspace root.",
+    input_schema: { type: "object", properties: { path: { type: "string" } }, required: ["path"] },
+  },
+  async run({ path: p }, ctx) {
+    return truncate(await fs.readFile(safePath(ctx.root, p), "utf8"));
+  },
+};
+
+export const listDir: Tool = {
+  readOnly: true,
+  schema: {
+    name: "list_dir",
+    description: "List files and folders in a directory (relative to workspace root). Folders end with /.",
+    input_schema: { type: "object", properties: { path: { type: "string", description: "Use '.' for root" } }, required: ["path"] },
+  },
+  async run({ path: p }, ctx) {
+    const entries = await fs.readdir(safePath(ctx.root, p), { withFileTypes: true });
+    return entries.map((e) => e.name + (e.isDirectory() ? "/" : "")).join("\n") || "(empty)";
+  },
+};
+
+export const writeFile: Tool = {
+  readOnly: false,
+  schema: {
+    name: "write_file",
+    description: "Create or overwrite a file with the given full content.",
+    input_schema: {
+      type: "object",
+      properties: { path: { type: "string" }, content: { type: "string" } },
+      required: ["path", "content"],
+    },
+  },
+  async run({ path: p, content }, ctx) {
+    const abs = safePath(ctx.root, p);
+    if (!(await ctx.approve(`Write ${p} (${content.length} chars)`))) return "DENIED by user.";
+    await fs.mkdir(path.dirname(abs), { recursive: true });
+    await fs.writeFile(abs, content, "utf8");
+    return `Wrote ${p}`;
+  },
+};
+</script>
+<script type="text/plain" class="code" data-lang="ts" data-file="src/tools/bash.ts">
+import { exec } from "node:child_process";
+import { promisify } from "node:util";
+import { truncate, type Tool } from "./types.js";
+
+const sh = promisify(exec);
+
+export const bash: Tool = {
+  readOnly: false,
+  schema: {
+    name: "bash",
+    description: "Run a shell command in the workspace. 30s timeout. Prefer small, targeted commands.",
+    input_schema: { type: "object", properties: { command: { type: "string" } }, required: ["command"] },
+  },
+  async run({ command }, ctx) {
+    if (!(await ctx.approve(`Run: ${command}`))) return "DENIED by user. Try a different approach or ask them.";
+    try {
+      const { stdout, stderr } = await sh(command, { cwd: ctx.root, timeout: 30_000, maxBuffer: 1_000_000 });
+      return truncate(stdout + (stderr ? `\n[stderr]\n${stderr}` : "")) || "(no output)";
+    } catch (e: any) {
+      return truncate(`exit code ${e.code ?? "?"}${e.killed ? " (timed out)" : ""}\n${e.stdout ?? ""}\n${e.stderr ?? ""}`);
+    }
+  },
+};
+</script>
+  <div class="box warn"><b class="t">This is not a sandbox</b><code>exec</code> with a working directory does not stop <code>rm -rf ~</code>. Real isolation comes from running the whole harness in a container or VM with limited mounts and network (Step 8). The approval prompt is a second layer, not the only one.</div>
+  <button class="done-btn">Mark step done</button>
+</section>
+
+<section class="step" id="s6" data-title="Tool design that models use well" data-level="2">
+  <h3><span class="badge" style="background:var(--lv2)">STEP 6</span> Tool design models use well</h3>
+  <div class="goal"><b>Goal:</b> learn the design rules that matter more than any code.</div>
+  <p>Tool quality is the biggest lever on agent quality. The model only knows your tool by its name, description and schema, so treat those as a prompt.</p>
+  <table>
+    <tr><th>Rule</th><th>Why</th></tr>
+    <tr><td>Describe <i>when</i> to use it, not just what it does</td><td>"Search the codebase for a string. Use before reading files you haven't located."</td></tr>
+    <tr><td>Return errors that teach</td><td>"File not found: src/a.ts. Did you mean src/app.ts?" lets the model recover in one step.</td></tr>
+    <tr><td>Cap output size, and say it was capped</td><td>A 2 MB log in context wastes money and buries signal. Tell the model how to get more (offset, filter).</td></tr>
+    <tr><td>Fewer, sharper tools</td><td>Ten overlapping tools confuse selection. Merge near-duplicates.</td></tr>
+    <tr><td>Make dangerous things explicit</td><td>Separate <code>read_file</code> from <code>write_file</code>. Don't hide writes inside a generic "do" tool.</td></tr>
+    <tr><td>Prefer human-readable output</td><td>Paths and names beat opaque IDs. Include just enough to act on.</td></tr>
+  </table>
+  <div class="box try"><b class="t">Try it</b>Add a <code>search</code> tool (ripgrep or a JS grep) that returns <code>file:line: text</code> capped at 100 matches, with a trailing "N more matches, narrow your pattern" message.</div>
+  <button class="done-btn">Mark step done</button>
+</section>
+
+<!-- ============ LEVEL 3 ============ -->
+<h2 class="level" style="color:var(--lv3)" id="lvl3">Level 3</h2>
+<h3 class="level-title">Control and safety</h3>
+<p class="level-desc">Goal: an agent you would trust to run unattended.</p>
+
+<section class="step" id="s7" data-title="The system prompt" data-level="3">
+  <h3><span class="badge" style="background:var(--lv3)">STEP 7</span> The system prompt</h3>
+  <div class="goal"><b>Goal:</b> give the model its role, environment, and working style.</div>
+<script type="text/plain" class="code" data-lang="ts" data-file="src/prompt.ts">
+export function buildSystemPrompt(opts: { root: string; date: string }) {
+  return `You are a careful software engineering agent working inside a project workspace.
+
+# Environment
+- Workspace root: ${opts.root}  (all paths are relative to it)
+- Today's date: ${opts.date}
+- You can read/list files freely. Writing files and running commands may require user approval.
+
+# How to work
+- Explore before editing: list the directory and read relevant files first.
+- Make the smallest change that solves the problem. Don't refactor unrelated code.
+- After changing code, verify it: run the tests or the build, and read the output.
+- If a tool fails, read the error, adjust, and retry a different way. Don't repeat the same failing call.
+- If the request is ambiguous and a wrong guess would be costly, ask one concise question.
+
+# Output
+- When finished, reply with a short summary: what changed, how you verified it, anything left open.
+- Never claim something works unless you saw it work.`;
+}
+</script>
+  <p>Good system prompts are short, concrete, and describe <b>behaviour you can observe</b> ("run the tests before saying done") rather than adjectives ("be thorough"). Put anything that changes per run (date, cwd, git status, project notes) in here so the model doesn't have to discover it.</p>
+  <div class="box tip"><b class="t">Project memory file</b>Many harnesses auto-load a <code>NOTES.md</code> / <code>AGENTS.md</code> from the workspace into the system prompt. It's the cheapest way to give the agent project conventions: build commands, style rules, gotchas.</div>
+  <button class="done-btn">Mark step done</button>
+</section>
+
+<section class="step" id="s8" data-title="Permissions and sandboxing" data-level="3">
+  <h3><span class="badge" style="background:var(--lv3)">STEP 8</span> Permissions and sandboxing</h3>
+  <div class="goal"><b>Goal:</b> defence in depth: policy, approval, and isolation.</div>
+  <p>Think in three layers, from cheapest to strongest:</p>
+  <ul class="tight">
+    <li><b>Policy:</b> rules that auto-allow, auto-deny, or ask. Pure code, instant.</li>
+    <li><b>Approval:</b> a human confirms risky actions.</li>
+    <li><b>Isolation:</b> a container/VM so even an approved or mistaken action can't hurt you.</li>
+  </ul>
+<script type="text/plain" class="code" data-lang="ts" data-file="src/permissions.ts">
+import readline from "node:readline/promises";
+
+export type Decision = "allow" | "deny" | "ask";
+
+const DENY = [/\brm\s+-rf\s+(\/|~)/, /\bsudo\b/, /curl[^|]*\|\s*(ba)?sh/, /:\(\)\s*\{/];
+const ALLOW = [/^(ls|pwd|cat|git (status|diff|log)|npm (test|run (build|lint)))\b/];
+
+export function policy(toolName: string, input: any): Decision {
+  if (toolName === "bash") {
+    const cmd: string = input.command ?? "";
+    if (DENY.some((r) => r.test(cmd))) return "deny";
+    if (ALLOW.some((r) => r.test(cmd))) return "allow";
+  }
+  return "ask";
+}
+
+export function makeApprover(autoApprove = false) {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  return async (message: string) => {
+    if (autoApprove) return true;
+    const a = (await rl.question(`\n⚠  ${message}\n   Allow? [y/N] `)).trim().toLowerCase();
+    return a === "y" || a === "yes";
+  };
+}
+</script>
+  <p>Then call <code>policy()</code> inside the registry's <code>execute</code> before running a tool. On <code>"deny"</code>, return an <code>is_error</code> result explaining why, so the model can adapt instead of retrying forever.</p>
+<script type="text/plain" class="code" data-lang="bash" data-file="terminal (isolation layer)">
+# Run the whole harness in a throwaway container: no host mounts except the workspace,
+# no secrets in env except the API key, and (ideally) restricted network.
+docker run --rm -it \
+  -v "$PWD/workspace:/work" -w /work \
+  -e ANTHROPIC_API_KEY \
+  --memory 1g --cpus 1 --pids-limit 200 \
+  node:20 npx tsx /app/src/cli.ts
+</script>
+  <div class="box warn"><b class="t">Prompt injection</b>Anything the agent reads (web pages, issues, files, tool output) can contain instructions aimed at it. Treat tool output as <i>data</i>, never as commands. The defence isn't a clever prompt; it's limiting what the agent <i>can</i> do (least-privilege tools, no secrets in reach, approval on anything with side effects or network egress).</div>
+  <button class="done-btn">Mark step done</button>
+</section>
+
+<section class="step" id="s9" data-title="Limits, budgets, cancellation" data-level="3">
+  <h3><span class="badge" style="background:var(--lv3)">STEP 9</span> Limits, budgets, cancellation</h3>
+  <div class="goal"><b>Goal:</b> an agent that can't loop forever or burn your wallet.</div>
+  <p>Upgrade the loop from Step 3 into the production shape. It now uses the registry, enforces turn/token budgets, handles every stop reason, and supports cancellation.</p>
+<script type="text/plain" class="code" data-lang="ts" data-file="src/agent.ts (v2)">
+import Anthropic from "@anthropic-ai/sdk";
+import { MODEL } from "./hello.js";
+import { Registry } from "./tools/registry.js";
+import { policy } from "./permissions.js";
+import type { Ctx } from "./tools/types.js";
+
+const client = new Anthropic();
+
+export interface RunOptions {
+  task: string;
+  system: string;
+  registry: Registry;
+  ctx: Ctx;
+  maxTurns?: number;
+  maxTokens?: number;          // total input+output budget for the run
+  signal?: AbortSignal;
+  messages?: Anthropic.MessageParam[];   // resume an existing conversation (Step 11)
+}
+
+export async function runAgent(o: RunOptions) {
+  const messages = o.messages ?? [];
+  messages.push({ role: "user", content: o.task });
+  let spent = 0;
+
+  for (let turn = 0; turn < (o.maxTurns ?? 30); turn++) {
+    if (o.signal?.aborted) return { text: "Cancelled.", messages, reason: "aborted" };
+
+    const res = await client.messages.create(
+      { model: MODEL, max_tokens: 4096, system: o.system, tools: o.registry.schemas(), messages },
+      { signal: o.signal },
+    );
+    spent += res.usage.input_tokens + res.usage.output_tokens;
+    messages.push({ role: "assistant", content: res.content });
+
+    const text = res.content.filter((b): b is Anthropic.TextBlock => b.type === "text").map((b) => b.text).join("\n");
+
+    switch (res.stop_reason) {
+      case "end_turn":
+      case "stop_sequence":
+        return { text, messages, reason: "done" };
+      case "max_tokens":
+        // Output was cut off. Ask the model to continue rather than silently returning a partial answer.
+        messages.push({ role: "user", content: "Your last message was cut off. Continue, more concisely." });
+        continue;
+      case "tool_use":
+        break; // handled below
+      default:
+        return { text: text || `Stopped: ${res.stop_reason}`, messages, reason: String(res.stop_reason) };
+    }
+
+    const results: Anthropic.ToolResultBlockParam[] = [];
+    for (const block of res.content) {
+      if (block.type !== "tool_use") continue;
+      const verdict = policy(block.name, block.input);
+      results.push(
+        verdict === "deny"
+          ? { type: "tool_result", tool_use_id: block.id, is_error: true, content: "Blocked by policy." }
+          : await o.registry.execute(block, o.ctx),
+      );
+    }
+    messages.push({ role: "user", content: results });
+
+    if (o.maxTokens && spent > o.maxTokens) {
+      return { text: "Stopped: token budget exhausted.", messages, reason: "budget" };
+    }
+  }
+  return { text: "Stopped: turn limit reached.", messages, reason: "max_turns" };
+}
+</script>
+  <div class="box tip"><b class="t">Why "continue" instead of failing?</b>Hitting <code>max_tokens</code> mid tool-call produces a malformed call. Handling it explicitly is a classic harness detail that separates demos from tools people rely on.</div>
+  <button class="done-btn">Mark step done</button>
+</section>
+
+<!-- ============ LEVEL 4 ============ -->
+<h2 class="level" style="color:var(--lv4)" id="lvl4">Level 4</h2>
+<h3 class="level-title">Experience and durability</h3>
+<p class="level-desc">Goal: it feels alive, and survives restarts.</p>
+
+<section class="step" id="s10" data-title="Streaming" data-level="4">
+  <h3><span class="badge" style="background:var(--lv4)">STEP 10</span> Streaming</h3>
+  <div class="goal"><b>Goal:</b> show text as it's generated and surface tool activity live.</div>
+  <p>Waiting 20 seconds for a wall of text feels broken. Streaming fixes perceived latency and lets users interrupt early. The SDK's stream helper gives you events plus the assembled final message, so the rest of your loop barely changes.</p>
+<script type="text/plain" class="code" data-lang="ts" data-file="src/agent.ts (streaming call)">
+// Replace client.messages.create(...) with:
+const stream = client.messages.stream(
+  { model: MODEL, max_tokens: 4096, system: o.system, tools: o.registry.schemas(), messages },
+  { signal: o.signal },
+);
+
+stream.on("text", (delta) => o.onText?.(delta));                 // print tokens as they arrive
+stream.on("contentBlock", (b) => {                                // a full block finished
+  if (b.type === "tool_use") o.onToolStart?.(b.name, b.input);
+});
+
+const res = await stream.finalMessage();                          // same shape as create()
+// ...rest of the loop is unchanged
+</script>
+<script type="text/plain" class="code" data-lang="ts" data-file="src/cli.ts (a tiny UI)">
+const result = await runAgent({
+  task, system, registry, ctx,
+  onText: (t) => process.stdout.write(t),
+  onToolStart: (name, input) => console.log(`\n🔧 ${name} ${JSON.stringify(input).slice(0, 120)}`),
+});
+</script>
+  <p>Treat these callbacks as your <b>event bus</b>. Later, a web UI, a log file, and your eval runner can all subscribe to the same events without touching the loop.</p>
+  <button class="done-btn">Mark step done</button>
+</section>
+
+<section class="step" id="s11" data-title="Sessions and persistence" data-level="4">
+  <h3><span class="badge" style="background:var(--lv4)">STEP 11</span> Sessions and persistence</h3>
+  <div class="goal"><b>Goal:</b> crash-safe transcripts and the ability to resume.</div>
+  <p>Since the API is stateless, <i>your</i> transcript is the agent's memory. Append every message to a JSONL file as it happens. If the process dies, you lose nothing.</p>
+<script type="text/plain" class="code" data-lang="ts" data-file="src/session.ts">
+import fs from "node:fs/promises";
+import path from "node:path";
+import { randomUUID } from "node:crypto";
+import type Anthropic from "@anthropic-ai/sdk";
+
+const DIR = ".sessions";
+
+export class Session {
+  constructor(public id: string, public messages: Anthropic.MessageParam[] = []) {}
+  private get file() { return path.join(DIR, `${this.id}.jsonl`); }
+
+  static async create() {
+    await fs.mkdir(DIR, { recursive: true });
+    return new Session(randomUUID());
+  }
+
+  static async resume(id: string) {
+    const raw = await fs.readFile(path.join(DIR, `${id}.jsonl`), "utf8");
+    const messages = raw.trim().split("\n").filter(Boolean).map((l) => JSON.parse(l));
+    return new Session(id, messages);
+  }
+
+  async append(m: Anthropic.MessageParam) {
+    this.messages.push(m);
+    await fs.appendFile(this.file, JSON.stringify(m) + "\n");
+  }
+}
+</script>
+  <p>Wire it in by calling <code>session.append()</code> wherever the loop does <code>messages.push()</code>. To resume, pass <code>session.messages</code> in as <code>o.messages</code> and send the next user message.</p>
+  <div class="box warn"><b class="t">Resume correctness</b>A transcript that ends on an assistant <code>tool_use</code> with no matching <code>tool_result</code> is invalid. On resume, detect that and either re-run the tool or append an <code>is_error</code> result saying "interrupted". Also store a version number with sessions so you can migrate formats later.</div>
+  <button class="done-btn">Mark step done</button>
+</section>
+
+<!-- ============ LEVEL 5 ============ -->
+<h2 class="level" style="color:var(--lv5)" id="lvl5">Level 5</h2>
+<h3 class="level-title">Advanced harness engineering</h3>
+<p class="level-desc">Goal: long-running, extensible, measurable agents.</p>
+
+<section class="step" id="s12" data-title="Context management" data-level="5">
+  <h3><span class="badge" style="background:var(--lv5)">STEP 12</span> Context management</h3>
+  <div class="goal"><b>Goal:</b> keep long tasks inside the context window without losing the plot.</div>
+  <p>Every turn re-sends the whole transcript. Tool outputs dominate it. Left alone, a long task will blow the window or get slow and expensive. Three techniques, from cheap to heavy:</p>
+
+  <p><b>1. Prompt caching:</b> mark the stable prefix (system prompt, tool schemas) so repeated turns are cheaper and faster.</p>
+<script type="text/plain" class="code" data-lang="ts" data-file="caching">
+system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
+</script>
+
+  <p><b>2. Clear stale tool results:</b> old file dumps and command output are rarely needed verbatim again.</p>
+<script type="text/plain" class="code" data-lang="ts" data-file="src/context.ts">
+import type Anthropic from "@anthropic-ai/sdk";
+
+// Replace the CONTENT of old tool results with a stub, keeping the structure valid.
+export function clearOldToolResults(messages: Anthropic.MessageParam[], keepLast = 6) {
+  const cutoff = messages.length - keepLast;
+  return messages.map((m, i) => {
+    if (i >= cutoff || m.role !== "user" || typeof m.content === "string") return m;
+    return {
+      ...m,
+      content: m.content.map((b) =>
+        b.type === "tool_result" ? { ...b, content: "[output cleared to save context]" } : b),
+    };
+  });
+}
+</script>
+
+  <p><b>3. Compaction:</b> when usage nears the limit, have the model summarise the older transcript and continue from the summary.</p>
+<script type="text/plain" class="code" data-lang="ts" data-file="src/context.ts (compaction)">
+import Anthropic from "@anthropic-ai/sdk";
+import { MODEL } from "./hello.js";
+const client = new Anthropic();
+
+export async function compact(messages: Anthropic.MessageParam[], keepTail = 8) {
+  // Cut at an ASSISTANT message so tool_use/tool_result pairs in the tail stay intact
+  // and roles still alternate after the summary (user) message.
+  let cut = Math.max(1, messages.length - keepTail);
+  while (cut < messages.length && messages[cut].role !== "assistant") cut++;
+  if (cut >= messages.length) return messages;
+
+  const summary = await client.messages.create({
+    model: MODEL,
+    max_tokens: 2000,
+    system:
+      "You are compacting an agent transcript for your future self. Write a dense summary: " +
+      "the user's goal, decisions made, files created/changed, commands run and their key results, " +
+      "current state, and open TODOs. Preserve exact names, paths, and error messages.",
+    messages: [{ role: "user", content: JSON.stringify(messages.slice(0, cut)) }],
+  });
+  const text = summary.content.filter((b): b is Anthropic.TextBlock => b.type === "text").map((b) => b.text).join("\n");
+
+  return [
+    { role: "user" as const, content: `<conversation_summary>\n${text}\n</conversation_summary>\nContinue the task from here.` },
+    ...messages.slice(cut),
+  ];
+}
+</script>
+<script type="text/plain" class="code" data-lang="ts" data-file="trigger it in the loop">
+// After each response: res.usage.input_tokens is how big the prompt was this turn.
+if (res.usage.input_tokens > CONTEXT_LIMIT * 0.7) {
+  messages = clearOldToolResults(messages);
+  if (res.usage.input_tokens > CONTEXT_LIMIT * 0.85) messages = await compact(messages);
+}
+</script>
+  <div class="box tip"><b class="t">Rule of thumb</b>Cheap tricks first (cache, clear, truncate at the tool). Compaction is lossy; use it as the last resort and write summaries that preserve <i>exact identifiers</i>.</div>
+  <button class="done-btn">Mark step done</button>
+</section>
+
+<section class="step" id="s13" data-title="Planning with a todo tool" data-level="5">
+  <h3><span class="badge" style="background:var(--lv5)">STEP 13</span> Planning with a todo tool</h3>
+  <div class="goal"><b>Goal:</b> help the model stay on track across dozens of steps.</div>
+  <p>A surprisingly effective trick: give the model a tool whose only job is to write its own plan down. It does nothing on the machine, but it keeps the plan <i>visible in recent context</i>, and gives you a progress UI for free.</p>
+<script type="text/plain" class="code" data-lang="ts" data-file="src/tools/todo.ts">
+import type { Tool } from "./types.js";
+
+type Item = { text: string; status: "pending" | "in_progress" | "done" };
+let todos: Item[] = [];
+
+export const todoWrite: Tool = {
+  readOnly: true,
+  schema: {
+    name: "todo_write",
+    description:
+      "Replace your task list. Use for any task with 3+ steps. Keep exactly one item in_progress. " +
+      "Mark items done as soon as they are finished.",
+    input_schema: {
+      type: "object",
+      properties: {
+        items: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              text: { type: "string" },
+              status: { type: "string", enum: ["pending", "in_progress", "done"] },
+            },
+            required: ["text", "status"],
+          },
+        },
+      },
+      required: ["items"],
+    },
+  },
+  async run({ items }) {
+    todos = items;
+    return todos.map((t) => `[${t.status === "done" ? "x" : t.status === "in_progress" ? "~" : " "}] ${t.text}`).join("\n");
+  },
+};
+</script>
+  <p>Render the list in your UI on every call. Users can see what the agent intends to do <i>before</i> it does it, which is also a good moment to let them correct it.</p>
+  <button class="done-btn">Mark step done</button>
+</section>
+
+<section class="step" id="s14" data-title="Subagents" data-level="5">
+  <h3><span class="badge" style="background:var(--lv5)">STEP 14</span> Subagents</h3>
+  <div class="goal"><b>Goal:</b> delegate big, noisy sub-tasks to a fresh context.</div>
+  <p>A subagent is just <b>your own <code>runAgent</code> called from inside a tool</b>. It gets a clean context, a narrower toolset, and returns only a short report. The parent never sees the 40 files it read, which keeps the parent's context small and focused.</p>
+<script type="text/plain" class="code" data-lang="ts" data-file="src/tools/delegate.ts">
+import { runAgent } from "../agent.js";
+import type { Registry } from "./registry.js";
+import type { Tool } from "./types.js";
+
+export function makeDelegate(allTools: Registry, systemFor: (role: string) => string): Tool {
+  // Subagents get read-only tools and NO delegate tool: prevents runaway recursion.
+  const readOnly = allTools.subset(["read_file", "list_dir", "search"]);
+
+  return {
+    readOnly: true,
+    schema: {
+      name: "delegate",
+      description:
+        "Hand a self-contained research task to a sub-agent with a fresh context (it can read and search, not edit). " +
+        "Use for broad exploration, e.g. 'find every place auth tokens are validated'. " +
+        "Describe exactly what you need back; the sub-agent cannot see this conversation.",
+      input_schema: { type: "object", properties: { task: { type: "string" } }, required: ["task"] },
+    },
+    async run({ task }, ctx) {
+      const r = await runAgent({
+        task, system: systemFor("researcher"), registry: readOnly, ctx,
+        maxTurns: 15, maxTokens: 150_000,
+      });
+      return r.text;   // only the final report crosses the boundary
+    },
+  };
+}
+</script>
+  <div class="box tip"><b class="t">When subagents win</b>Big exploratory reads, independent parallel investigations, and isolating risky tools. When they lose: small tasks (the overhead dominates) and tasks needing the parent's full context (the subagent can't see it).</div>
+  <button class="done-btn">Mark step done</button>
+</section>
+
+<section class="step" id="s15" data-title="Parallel tools and hooks" data-level="5">
+  <h3><span class="badge" style="background:var(--lv5)">STEP 15</span> Parallel tool calls and hooks</h3>
+  <div class="goal"><b>Goal:</b> speed up the loop and make behaviour programmable without editing it.</div>
+  <p><b>Parallel execution.</b> Models often request several tool calls in one turn. Read-only calls are safe to run concurrently; side-effecting ones should run in order.</p>
+<script type="text/plain" class="code" data-lang="ts" data-file="parallel execution in the loop">
+const calls = res.content.filter((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
+const allReadOnly = calls.every((c) => o.registry.get(c.name)?.readOnly);
+
+const results = allReadOnly
+  ? await Promise.all(calls.map((c) => o.registry.execute(c, o.ctx)))      // concurrent
+  : await sequential(calls, (c) => o.registry.execute(c, o.ctx));          // one at a time, in order
+
+messages.push({ role: "user", content: results });   // order of results doesn't matter, ids do
+</script>
+  <p><b>Hooks.</b> Let callers inject code at defined points: before a tool (veto/modify), after a tool (log/format), at stop (run tests, block "done" if they fail).</p>
+<script type="text/plain" class="code" data-lang="ts" data-file="src/hooks.ts">
+export interface Hooks {
+  preTool?(name: string, input: any): Promise<{ deny: string } | void>;
+  postTool?(name: string, input: any, output: string, isError: boolean): Promise<void>;
+  onStop?(finalText: string): Promise<{ continueWith: string } | void>;
+}
+
+// Example: refuse to finish until tests pass.
+export const mustPassTests = (run: () => Promise<boolean>): Hooks => ({
+  async onStop() {
+    if (!(await run())) return { continueWith: "The test suite is failing. Fix it before finishing." };
+  },
+});
+</script>
+  <p>In the loop: call <code>hooks.preTool</code> before executing (a <code>deny</code> becomes an <code>is_error</code> result), <code>postTool</code> after, and <code>onStop</code> when the model says it's done. If <code>onStop</code> returns <code>continueWith</code>, push that as a new user message and keep looping. This "don't stop until the check passes" pattern is one of the most valuable things a harness can add.</p>
+  <button class="done-btn">Mark step done</button>
+</section>
+
+<section class="step" id="s16" data-title="Extensibility: skills and MCP" data-level="5">
+  <h3><span class="badge" style="background:var(--lv5)">STEP 16</span> Extensibility: skills and MCP</h3>
+  <div class="goal"><b>Goal:</b> add capabilities without bloating the prompt or the codebase.</div>
+  <p><b>Skills (progressive disclosure).</b> Instead of stuffing every instruction into the system prompt, keep a folder per skill with a <code>SKILL.md</code>. Put only each skill's <i>name and one-line description</i> in the system prompt, and give the model a <code>load_skill</code> tool that returns the full text on demand.</p>
+<script type="text/plain" class="code" data-lang="ts" data-file="src/skills.ts">
+import fs from "node:fs/promises";
+import path from "node:path";
+import type { Tool } from "./tools/types.js";
+
+export async function loadSkillIndex(dir: string) {
+  const names = (await fs.readdir(dir, { withFileTypes: true })).filter((e) => e.isDirectory()).map((e) => e.name);
+  const index: { name: string; description: string }[] = [];
+  for (const name of names) {
+    const md = await fs.readFile(path.join(dir, name, "SKILL.md"), "utf8");
+    const description = /^description:\s*(.+)$/m.exec(md)?.[1] ?? "";
+    index.push({ name, description });
+  }
+  return index; // inject into the system prompt: "- pdf: Use when working with PDF files"
+}
+
+export const loadSkill = (dir: string): Tool => ({
+  readOnly: true,
+  schema: {
+    name: "load_skill",
+    description: "Load the full instructions for a named skill listed in the system prompt.",
+    input_schema: { type: "object", properties: { name: { type: "string" } }, required: ["name"] },
+  },
+  async run({ name }) {
+    if (!/^[\w-]+$/.test(name)) throw new Error("Invalid skill name");
+    return fs.readFile(path.join(dir, name, "SKILL.md"), "utf8");
+  },
+});
+</script>
+  <p><b>MCP (Model Context Protocol).</b> An open standard for exposing tools and data to agents over a common interface. An MCP client in your harness connects to servers, lists their tools, and registers each as a <code>Tool</code> in your registry whose <code>run()</code> forwards the call. Your loop doesn't change at all, which is the payoff of the registry from Step 4. Use the official MCP SDK rather than hand-rolling the protocol; check its docs for current APIs.</p>
+  <div class="box warn"><b class="t">Trust boundaries</b>Third-party tools are third-party code and third-party prompt text. Namespace their tools (<code>server__tool</code>), apply your permission policy to them, and don't auto-approve tools you didn't write.</div>
+  <button class="done-btn">Mark step done</button>
+</section>
+
+<section class="step" id="s17" data-title="Evals and observability" data-level="5">
+  <h3><span class="badge" style="background:var(--lv5)">STEP 17</span> Evals and observability</h3>
+  <div class="goal"><b>Goal:</b> know whether a change made the agent better or worse.</div>
+  <p>Agents are non-deterministic and a "small" prompt tweak can silently break other behaviour. Without evals you're guessing. Start tiny: 10–20 realistic tasks, each with an automatic check.</p>
+<script type="text/plain" class="code" data-lang="ts" data-file="evals/run.ts">
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { exec } from "node:child_process";
+import { promisify } from "node:util";
+import { runAgent } from "../src/agent.js";
+const sh = promisify(exec);
+
+interface Case {
+  name: string;
+  fixture: string;                              // folder copied into a temp workspace
+  prompt: string;
+  check(dir: string): Promise<boolean>;         // objective pass/fail: tests, file contents, etc.
+}
+
+const cases: Case[] = [
+  {
+    name: "fix-off-by-one",
+    fixture: "evals/fixtures/off-by-one",
+    prompt: "The tests in this project fail. Fix the bug in the source (not the tests).",
+    check: async (dir) => (await sh("npm test --silent", { cwd: dir }).then(() => true, () => false)),
+  },
+];
+
+const TRIALS = 3;   // same task several times: you're measuring a rate, not a single outcome
+for (const c of cases) {
+  let pass = 0, turns = 0, tokens = 0;
+  for (let t = 0; t < TRIALS; t++) {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "eval-"));
+    await fs.cp(c.fixture, dir, { recursive: true });
+    const r = await runAgent({ task: c.prompt, /* system, registry, ctx rooted at dir... */ } as any);
+    if (await c.check(dir)) pass++;
+    // collect turns / tokens from the run result or your event bus
+  }
+  console.log(`${c.name}: ${pass}/${TRIALS} passed`);
+}
+</script>
+  <p><b>Observability.</b> Log every model request/response and every tool call with a run ID, latency, token usage, and cost. When something goes wrong in production, the transcript plus these traces is how you debug it. Track over time: pass rate, average turns, tokens per task, tool error rate, and how often budgets or limits trigger.</p>
+  <div class="box tip"><b class="t">Eval habits that pay off</b>
+    <ul class="tight">
+      <li>Every real failure you see becomes a new test case.</li>
+      <li>Check outcomes (tests pass, file exists), not exact wording.</li>
+      <li>Change one thing at a time (prompt, tool description, model) and compare pass rates.</li>
+    </ul>
+  </div>
+  <button class="done-btn">Mark step done</button>
+</section>
+
+<section class="step" id="s18" data-title="Production checklist and next steps" data-level="5">
+  <h3><span class="badge" style="background:var(--lv5)">STEP 18</span> Production checklist and next steps</h3>
+  <div class="goal"><b>Goal:</b> know what's left between "works on my laptop" and "ships".</div>
+  <table>
+    <tr><th>Area</th><th>Checklist</th></tr>
+    <tr><td>Reliability</td><td>Retry with backoff on 429/5xx/overloaded; per-tool timeouts; idempotent or resumable tools; handle every <code>stop_reason</code>.</td></tr>
+    <tr><td>Safety</td><td>Container isolation, least-privilege tools, approval for side effects, no secrets in the agent's reach, injection-aware design, audit log.</td></tr>
+    <tr><td>Cost &amp; latency</td><td>Prompt caching, capped tool output, context clearing/compaction, token budgets per run, cheaper models for subagents/summaries.</td></tr>
+    <tr><td>UX</td><td>Streaming, visible plan, easy interrupt, clear approval prompts, readable diffs, resumable sessions.</td></tr>
+    <tr><td>Quality</td><td>Eval suite in CI, regression cases from real failures, trace review, A/B on prompt and tool descriptions.</td></tr>
+    <tr><td>Operations</td><td>Structured logs with run IDs, metrics dashboards, rate limiting per user, kill switch.</td></tr>
+  </table>
+
+  <p><b>Suggested project layout</b></p>
+<script type="text/plain" class="code" data-lang="bash" data-file="final structure">
+src/
+  agent.ts          # the loop (budgets, stop reasons, streaming, hooks)
+  prompt.ts         # system prompt builder
+  permissions.ts    # policy + approval
+  session.ts        # JSONL persistence / resume
+  context.ts        # clearing + compaction
+  hooks.ts
+  skills.ts
+  tools/
+    types.ts  registry.ts  files.ts  bash.ts  search.ts  todo.ts  delegate.ts
+  cli.ts            # terminal UI (or server.ts for a web UI)
+evals/
+  run.ts  fixtures/
+</script>
+
+  <p><b>Where to go next</b></p>
+  <ul class="tight">
+    <li><b>Use a ready-made harness.</b> Anthropic's Claude Agent SDK packages much of this (loop, file/shell tools, permissions, sessions, subagents, hooks, MCP). Building your own first, as you just did, is the best way to understand what it's doing. Check the current docs at <a href="https://docs.claude.com" target="_blank" rel="noopener">docs.claude.com</a>.</li>
+    <li><b>Read other harnesses' source.</b> Open-source coding agents are great case studies in tool design and context handling.</li>
+    <li><b>Specialise.</b> A research agent wants web tools and citation checks; a support agent wants ticket APIs and strict permissions; a data agent wants a sandboxed code interpreter.</li>
+    <li><b>Go multi-agent carefully.</b> Start with the single loop plus subagents-as-tools. Add orchestration only when evals show you need it.</li>
+  </ul>
+  <div class="box try"><b class="t">Capstone project</b>Build a "fix my failing tests" CLI: it takes a repo path, explores, edits, runs the tests, and refuses to stop until they pass (Step 15 hook). Add an eval with 10 broken fixtures and track your pass rate as you improve prompts and tools.</div>
+  <button class="done-btn">Mark step done</button>
+</section>
+
+<footer>
+  You now have the mental model: <b>a loop, a registry of well-designed tools, layered safety, durable context, and evals to keep you honest.</b> Everything else is refinement of those five ideas.
+</footer>
+
+</main>
+</div>
+
+<script>
+(function(){
+  // ---------- code blocks ----------
+  function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  var re=/(\/\/[^\n]*|\/\*[\s\S]*?\*\/)|(`(?:\\[\s\S]|[^`\\])*`|"(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*')|\b(import|from|export|const|let|var|async|await|function|return|if|else|for|while|of|in|new|type|interface|class|try|catch|throw|break|continue|typeof|as|true|false|null|undefined|void|extends|implements|switch|case|default)\b|\b(\d[\d_]*)\b/g;
+  function highlight(src){
+    var out='',last=0,m;re.lastIndex=0;
+    while((m=re.exec(src))){
+      out+=esc(src.slice(last,m.index));
+      var cls=m[1]?'c':m[2]?'s':m[3]?'k':'n';
+      out+='<span class="'+cls+'">'+esc(m[0])+'</span>';
+      last=m.index+m[0].length;
+    }
+    return out+esc(src.slice(last));
+  }
+  document.querySelectorAll('script.code').forEach(function(el){
+    var src=el.textContent.replace(/^\n/,'').replace(/\s+$/,'');
+    var lang=el.getAttribute('data-lang'), file=el.getAttribute('data-file')||lang;
+    var fig=document.createElement('figure');fig.className='code';
+    var cap=document.createElement('figcaption');
+    var name=document.createElement('span');name.textContent=file;
+    var btn=document.createElement('button');btn.textContent='Copy';
+    btn.onclick=function(){
+      (navigator.clipboard?navigator.clipboard.writeText(src):Promise.reject()).then(function(){
+        btn.textContent='Copied';setTimeout(function(){btn.textContent='Copy';},1400);
+      }).catch(function(){btn.textContent='Press Ctrl+C';});
+    };
+    cap.appendChild(name);cap.appendChild(btn);
+    var pre=document.createElement('pre');var code=document.createElement('code');
+    code.style.cssText='background:none;padding:0;font:inherit';
+    code.innerHTML=(lang==='bash')?esc(src):highlight(src);
+    pre.appendChild(code);fig.appendChild(cap);fig.appendChild(pre);
+    el.parentNode.replaceChild(fig,el);
+  });
+
+  // ---------- navigation ----------
+  var colors={1:'var(--lv1)',2:'var(--lv2)',3:'var(--lv3)',4:'var(--lv4)',5:'var(--lv5)'};
+  var names={1:'Level 1: Foundations',2:'Level 2: Real tools',3:'Level 3: Control & safety',4:'Level 4: Experience',5:'Level 5: Advanced'};
+  var nav=document.getElementById('nav');
+  var html='<h2>Agent Harness Tutorial</h2><div class="sub">18 steps · basic → advanced</div><a href="#intro"><span class="num"></span>What is a harness?</a>';
+  var cur=0;
+  document.querySelectorAll('section.step').forEach(function(s,i){
+    var lv=+s.getAttribute('data-level');
+    if(lv!==cur){cur=lv;html+='<div class="lvl" style="color:'+colors[lv]+'">'+names[lv]+'</div>';}
+    html+='<a href="#'+s.id+'" data-id="'+s.id+'"><span class="num">'+(i+1)+'</span><span>'+s.getAttribute('data-title')+'</span></a>';
+  });
+  nav.innerHTML=html;
+
+  // ---------- progress tracking ----------
+  var store={};
+  try{store=JSON.parse(localStorage.getItem('harness-progress')||'{}');}catch(e){}
+  function paint(){
+    document.querySelectorAll('section.step').forEach(function(s){
+      var done=!!store[s.id];
+      var b=s.querySelector('.done-btn');if(b)b.textContent=done?'✓ Done (click to undo)':'Mark step done';
+      var a=nav.querySelector('a[data-id="'+s.id+'"]');if(a)a.classList.toggle('done',done);
+    });
+  }
+  document.querySelectorAll('section.step').forEach(function(s){
+    var b=s.querySelector('.done-btn');if(!b)return;
+    b.onclick=function(){
+      store[s.id]=!store[s.id];
+      try{localStorage.setItem('harness-progress',JSON.stringify(store));}catch(e){}
+      paint();
+    };
+  });
+  paint();
+
+  // ---------- scroll spy + progress bar ----------
+  var steps=[].slice.call(document.querySelectorAll('section.step'));
+  var bar=document.getElementById('progress');
+  function onScroll(){
+    var h=document.documentElement;
+    bar.style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';
+    var active=null;
+    steps.forEach(function(s){if(s.getBoundingClientRect().top<140)active=s;});
+    nav.querySelectorAll('a').forEach(function(a){a.classList.toggle('active',active&&a.getAttribute('data-id')===active.id);});
+  }
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+</script>
+</body>
+</html>
